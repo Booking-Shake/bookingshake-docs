@@ -1,0 +1,325 @@
+---
+title: "Webhooks"
+description: "Receive real-time notifications when accounts and contacts change in BookingShake"
+icon: "webhook"
+---
+
+## Overview
+
+Webhooks allow your application to receive real-time notifications when data changes in BookingShake. Instead of polling the API for updates, BookingShake automatically sends HTTP POST requests to your specified endpoint whenever an account or contact is created, updated, or deleted.
+
+**Why use webhooks?**
+- **Real-time updates**: Receive notifications instantly when data changes
+- **Reduced API usage**: No need to continuously poll for changes
+- **Efficient**: Only get notified about events you care about
+- **Scalable**: Build reactive integrations that sync data automatically
+
+**Common use cases:**
+- Sync contacts and accounts to external CRM systems (Salesforce, HubSpot, etc.)
+- Trigger automated workflows when new contacts are created
+- Update analytics dashboards in real-time
+- Maintain data consistency across multiple platforms
+
+## Quick Start
+
+<Steps>
+  <Step title="Access Webhook Settings">
+    In your BookingShake dashboard, go to **Settings > Integrations** and scroll to the **Webhooks** section.
+  </Step>
+
+  <Step title="Create a Webhook">
+    Click **New Webhook** and configure:
+    - **Name**: A descriptive name for your webhook (e.g., "CRM Sync")
+    - **URL**: Your HTTPS endpoint (e.g., `https://api.yourdomain.com/webhooks/bookingshake`)
+    - **Events**: Select which events to receive (see available events below)
+  </Step>
+
+  <Step title="Save and Copy Secret">
+    After saving, copy the webhook secret. You'll need it to verify webhook signatures for security.
+  </Step>
+
+  <Step title="Test Your Webhook">
+    Create or update a contact or account to trigger a test webhook delivery.
+  </Step>
+</Steps>
+
+## Available Events
+
+BookingShake supports six webhook events:
+
+| Event | Description | Triggered When |
+|-------|-------------|----------------|
+| `account.created` | New account created | A company is added to your venue |
+| `account.updated` | Account modified | Company information is updated |
+| `account.deleted` | Account removed | A company is deleted |
+| `contact.created` | New contact created | A person is added to your venue |
+| `contact.updated` | Contact modified | Contact information is updated |
+| `contact.deleted` | Contact removed | A contact is deleted |
+
+<Note>
+  You can subscribe to multiple events in a single webhook. Select only the events you need to reduce unnecessary traffic.
+</Note>
+
+## Webhook Payload Structure
+
+All webhooks follow this consistent structure:
+
+```json
+{
+  "event": "contact.created",
+  "timestamp": 1731493800000,
+  "venue_id": "venue123",
+  "venues_group_id": "group456",
+  "data": {
+    // Event-specific data (see examples below)
+  }
+}
+```
+
+### Payload Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `event` | string | The event type (e.g., `contact.created`) |
+| `timestamp` | number | Unix timestamp in milliseconds when the event occurred |
+| `venue_id` | string | The venue ID where the change happened |
+| `venues_group_id` | string \| null | The venues group ID if applicable |
+| `data` | object | Event-specific data containing the resource details |
+
+## Event Examples
+
+### Contact Created
+
+Triggered when a new contact is added to your venue.
+
+```json
+{
+  "event": "contact.created",
+  "timestamp": 1731493800000,
+  "venue_id": "venue123",
+  "venues_group_id": "group456",
+  "data": {
+    "id": "contact-456",
+    "first_name": "John",
+    "last_name": "Doe",
+    "email": "john.doe@example.com",
+    "phone": "+33612345678",
+    "landline_phone": "+33145678901",
+    "title": "CEO",
+    "account_id": "account-123",
+    "optin_marketing": true,
+    "address_line_1": "10 rue Example",
+    "postal_code": "75001",
+    "city": "Paris",
+    "country": "France",
+    "created_at": 1731493800000
+  }
+}
+```
+
+### Contact Updated
+
+Triggered when contact information is modified. Contains all contact data after the update.
+
+```json
+{
+  "event": "contact.updated",
+  "timestamp": 1731493900000,
+  "venue_id": "venue123",
+  "venues_group_id": "group456",
+  "data": {
+    "id": "contact-456",
+    "first_name": "John",
+    "last_name": "Doe",
+    "email": "john.newemail@example.com",
+    "phone": "+33698765432",
+    "landline_phone": "+33145678901",
+    "title": "CEO",
+    "account_id": "account-123",
+    "optin_marketing": true,
+    "address_line_1": "10 rue Example",
+    "postal_code": "75001",
+    "city": "Paris",
+    "country": "France",
+    "created_at": 1731493800000
+  }
+}
+```
+
+### Contact Deleted
+
+Triggered when a contact is removed. Only includes the contact ID.
+
+```json
+{
+  "event": "contact.deleted",
+  "timestamp": 1731494000000,
+  "venue_id": "venue123",
+  "venues_group_id": "group456",
+  "data": {
+    "id": "contact-456"
+  }
+}
+```
+
+### Account Created
+
+Triggered when a new account (company) is added to your venue.
+
+```json
+{
+  "event": "account.created",
+  "timestamp": 1731495000000,
+  "venue_id": "venue123",
+  "venues_group_id": "group456",
+  "data": {
+    "id": "account-123",
+    "name": "Acme Corp",
+    "legal_name": "ACME CORPORATION SAS",
+    "company_type": "SAS",
+    "company_registration_id": "123456789",
+    "vat_number": "FR12345678901",
+    "address_line_1": "123 rue Example",
+    "address_line_2": "Batiment A",
+    "postal_code": "75001",
+    "city": "Paris",
+    "country": "France",
+    "billing_address_line_1": "123 rue Example",
+    "billing_postal_code": "75001",
+    "billing_city": "Paris",
+    "billing_country": "France",
+    "created_at": 1731495000000
+  }
+}
+```
+
+### Account Updated
+
+Triggered when account information is modified. Contains all account data after the update.
+
+```json
+{
+  "event": "account.updated",
+  "timestamp": 1731495100000,
+  "venue_id": "venue123",
+  "venues_group_id": "group456",
+  "data": {
+    "id": "account-123",
+    "name": "Acme Corporation",
+    "legal_name": "ACME CORPORATION SAS",
+    "company_type": "SAS",
+    "company_registration_id": "123456789",
+    "vat_number": "FR98765432101",
+    "address_line_1": "123 rue Example",
+    "address_line_2": "Batiment A",
+    "postal_code": "75001",
+    "city": "Paris",
+    "country": "France",
+    "billing_address_line_1": "123 rue Example",
+    "billing_postal_code": "75001",
+    "billing_city": "Paris",
+    "billing_country": "France",
+    "created_at": 1731495000000
+  }
+}
+```
+
+### Account Deleted
+
+Triggered when an account is removed. Only includes the account ID.
+
+```json
+{
+  "event": "account.deleted",
+  "timestamp": 1731495200000,
+  "venue_id": "venue123",
+  "venues_group_id": "group456",
+  "data": {
+    "id": "account-123"
+  }
+}
+```
+
+## HTTP Headers
+
+Each webhook request includes these headers:
+
+```http
+Content-Type: application/json
+User-Agent: Bookingshake-Webhooks/1.0
+Bookingshake-Signature: <hmac-sha256-signature>
+Idempotency-Key: <unique-uuid>
+```
+
+### Header Details
+
+| Header | Description |
+|--------|-------------|
+| `Content-Type` | Always `application/json` |
+| `User-Agent` | Identifies the request as coming from BookingShake webhooks |
+| `Bookingshake-Signature` | HMAC SHA256 signature for verifying authenticity (see [Security](/api-reference/webhooks/security)) |
+| `Idempotency-Key` | Unique UUID for this delivery attempt - use to prevent duplicate processing |
+
+## Custom Fields
+
+Webhooks include custom fields configured for your venue. Custom fields are prefixed with `custom_` followed by a UUID:
+
+```json
+{
+  "event": "contact.created",
+  "data": {
+    "id": "contact-456",
+    "first_name": "John",
+    "last_name": "Doe",
+    "custom_5d07ff93-9b23-4e37-8654-4661fcfd8da8": "VIP Customer",
+    "custom_7a12bc34-5de6-4f78-9012-3456789abcde": [0, 1, 2]
+  }
+}
+```
+
+<Note>
+  Custom field values can be strings, numbers, arrays, or objects depending on your field configuration.
+</Note>
+
+## Venue vs Venues Group Webhooks
+
+When creating a webhook, you can choose the scope:
+
+**Venue-level webhooks**: Receive events only for a specific venue
+- Use when you want separate webhook endpoints per venue
+- Useful for venue-specific integrations
+
+**Venues group webhooks**: Receive events for all venues in a group
+- Use when you want a single endpoint for multiple venues
+- More efficient for managing multi-venue organizations
+- The `venue_id` field identifies which venue triggered the event
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Security & Verification" icon="shield-halved" href="/api-reference/webhooks/security">
+    Learn how to verify webhook signatures and implement security best practices
+  </Card>
+
+  <Card title="Error Handling" icon="triangle-exclamation" href="/api-reference/errors">
+    Understand error codes and how to handle failures
+  </Card>
+
+  <Card title="API Reference" icon="code" href="/api-reference/introduction">
+    Explore the BookingShake API for additional functionality
+  </Card>
+
+  <Card title="Support" icon="life-ring" href="mailto:support@bookingshake.com">
+    Contact our support team for assistance
+  </Card>
+</CardGroup>
+
+## Rate Limits and Delivery
+
+<Note>
+  **Delivery timeout**: Your endpoint must respond within 5 seconds with a `200-299` status code.
+
+  **Retry policy**: Failed deliveries are automatically retried up to 10 times with exponential backoff.
+
+  **Status monitoring**: Check your webhook status in the dashboard to track delivery success and failures.
+</Note>

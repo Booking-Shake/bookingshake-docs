@@ -1,0 +1,428 @@
+---
+title: "Error Handling"
+description: "Learn about HTTP status codes and error responses in the BookingShake API"
+icon: "triangle-exclamation"
+---
+
+## Overview
+
+The BookingShake API uses standard HTTP status codes to indicate the success or failure of requests. Error responses include a JSON object with a descriptive `message` field to help you understand what went wrong.
+
+## HTTP Status Codes
+
+| Status Code | Meaning | Description |
+|-------------|---------|-------------|
+| `200` | Success | Request completed successfully |
+| `400` | Bad Request | Invalid request parameters or authentication error |
+| `500` | Internal Server Error | Something went wrong on our end |
+
+## Error Response Format
+
+All errors follow a consistent JSON structure:
+
+```json
+{
+  "message": "error description here"
+}
+```
+
+## Common Errors
+
+### Authentication Errors
+
+<AccordionGroup>
+  <Accordion title="missing token">
+    **HTTP Status:** `400 Bad Request`
+
+    **Cause:** The `Authorization` header is missing from the request.
+
+    **Solution:** Include the Bearer token in the Authorization header:
+    ```http
+    Authorization: Bearer YOUR_API_KEY
+    ```
+
+    **Example:**
+    ```bash
+    curl -X GET 'https://api.bookingshake.io/api/sources' \
+      -H 'Authorization: Bearer YOUR_API_KEY'
+    ```
+  </Accordion>
+
+  <Accordion title="invalid token">
+    **HTTP Status:** `400 Bad Request`
+
+    **Cause:** The API key provided is incorrect, expired, or revoked.
+
+    **Solution:**
+    - Verify you copied the complete API key without extra spaces
+    - Ensure you're using the correct API key from Settings > Integrations
+    - Generate a new API key if needed
+
+    **Troubleshooting:**
+    1. Log in to BookingShake dashboard
+    2. Go to Settings > Integrations
+    3. Copy the API key again
+    4. Try the request with the fresh key
+  </Accordion>
+</AccordionGroup>
+
+### Request Body Errors
+
+<AccordionGroup>
+  <Accordion title="body is empty">
+    **HTTP Status:** `400 Bad Request`
+
+    **Cause:** The request body is empty or not included in a POST request.
+
+    **Solution:** Include a valid JSON body with your POST request:
+    ```bash
+    curl -X POST 'https://api.bookingshake.io/api/events/create' \
+      -H 'Authorization: Bearer YOUR_API_KEY' \
+      -H 'Content-Type: application/json' \
+      -d '{
+        "bookings": [...],
+        "contact": {...}
+      }'
+    ```
+  </Accordion>
+
+  <Accordion title="invalid body">
+    **HTTP Status:** `400 Bad Request`
+
+    **Cause:** The request body is not valid JSON or cannot be parsed.
+
+    **Solution:**
+    - Ensure your JSON is properly formatted
+    - Check for missing commas, quotes, or brackets
+    - Validate your JSON using a JSON validator
+
+    **Common Issues:**
+    ```json
+    // ❌ Invalid - missing comma
+    {
+      "bookings": []
+      "contact": {}
+    }
+
+    // ✅ Valid
+    {
+      "bookings": [],
+      "contact": {}
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+### Missing Required Fields
+
+<AccordionGroup>
+  <Accordion title="missing bookings">
+    **HTTP Status:** `400 Bad Request`
+
+    **Cause:** The `bookings` array is missing from the request body.
+
+    **Solution:** Include at least one booking in the `bookings` array:
+    ```json
+    {
+      "bookings": [
+        {
+          "date": "15-03-2025",
+          "startTime": "14:00",
+          "pax": "50"
+        }
+      ],
+      "contact": {...}
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="missing contact">
+    **HTTP Status:** `400 Bad Request`
+
+    **Cause:** The `contact` object is missing from the request body.
+
+    **Solution:** Include contact information with required fields:
+    ```json
+    {
+      "bookings": [...],
+      "contact": {
+        "first_name": "John",
+        "last_name": "Doe",
+        "email": "john.doe@example.com"
+      }
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="missing pax">
+    **HTTP Status:** `400 Bad Request`
+
+    **Cause:** The `pax` (number of attendees) field is missing from a booking.
+
+    **Solution:** Include the `pax` field in each booking:
+    ```json
+    {
+      "date": "15-03-2025",
+      "startTime": "14:00",
+      "pax": "50"
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+### Format Validation Errors
+
+<AccordionGroup>
+  <Accordion title="date format must be DD-MM-YYYY">
+    **HTTP Status:** `400 Bad Request`
+
+    **Cause:** The date is not in the correct DD-MM-YYYY format.
+
+    **Solution:** Use the DD-MM-YYYY format:
+
+    **Examples:**
+    - ✅ Correct: `"15-03-2025"`, `"01-12-2024"`, `"31-01-2025"`
+    - ❌ Incorrect: `"2025-03-15"`, `"03/15/2025"`, `"15.03.2025"`
+
+    ```json
+    {
+      "date": "15-03-2025"
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="startTime format must be HH:mm">
+    **HTTP Status:** `400 Bad Request`
+
+    **Cause:** The time is not in the correct HH:mm format (24-hour).
+
+    **Solution:** Use the HH:mm format with 24-hour time:
+
+    **Examples:**
+    - ✅ Correct: `"14:00"`, `"09:30"`, `"23:45"`
+    - ❌ Incorrect: `"2:00 PM"`, `"14:00:00"`, `"14h00"`
+
+    ```json
+    {
+      "startTime": "14:00",
+      "endTime": "18:00"
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="endTime format must be HH:mm">
+    **HTTP Status:** `400 Bad Request`
+
+    **Cause:** The end time is not in the correct HH:mm format.
+
+    **Solution:** Same as `startTime` - use HH:mm format (24-hour).
+  </Accordion>
+</AccordionGroup>
+
+### Resource Validation Errors
+
+<AccordionGroup>
+  <Accordion title="invalid space">
+    **HTTP Status:** `400 Bad Request`
+
+    **Cause:** The `space_id` provided does not exist or is not valid for your venue.
+
+    **Solution:**
+    1. Retrieve available spaces first:
+    ```bash
+    curl -X GET 'https://api.bookingshake.io/api/spaces' \
+      -H 'Authorization: Bearer YOUR_API_KEY'
+    ```
+
+    2. Use a valid `space_id` from the response:
+    ```json
+    {
+      "space_id": "space_conf_a"
+    }
+    ```
+
+    3. Or omit the `space_id` to use the default space.
+  </Accordion>
+
+  <Accordion title="invalid source">
+    **HTTP Status:** `400 Bad Request`
+
+    **Cause:** The `source_slug` or `source_id` provided does not exist.
+
+    **Solution:**
+    1. Retrieve available sources:
+    ```bash
+    curl -X GET 'https://api.bookingshake.io/api/sources' \
+      -H 'Authorization: Bearer YOUR_API_KEY'
+    ```
+
+    2. Use a valid source identifier from the response.
+  </Accordion>
+</AccordionGroup>
+
+### Server Errors
+
+<Accordion title="Internal server error">
+  **HTTP Status:** `500 Internal Server Error`
+
+  **Cause:** An unexpected error occurred on the server.
+
+  **What to do:**
+  1. Wait a moment and retry your request
+  2. If the error persists, contact support at [support@bookingshake.com](mailto:support@bookingshake.com)
+  3. Include the following information:
+     - Timestamp of the request
+     - Request method and endpoint
+     - Request body (sanitize any sensitive data)
+     - Any correlation ID if provided in the response
+</Accordion>
+
+## Error Handling Best Practices
+
+### 1. Always Check Status Codes
+
+<CodeGroup>
+
+```javascript Node.js
+const response = await fetch('https://api.bookingshake.io/api/events/create', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${apiKey}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify(payload)
+});
+
+if (!response.ok) {
+  const error = await response.json();
+  console.error(`Error ${response.status}:`, error.message);
+  throw new Error(error.message);
+}
+
+const result = await response.json();
+console.log('Success:', result);
+```
+
+```python Python
+response = requests.post(
+    'https://api.bookingshake.io/api/events/create',
+    headers=headers,
+    json=payload
+)
+
+if response.status_code != 200:
+    error = response.json()
+    print(f"Error {response.status_code}: {error['message']}")
+    raise Exception(error['message'])
+
+result = response.json()
+print('Success:', result)
+```
+
+```php PHP
+$response = curl_exec($ch);
+$statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+if ($statusCode !== 200) {
+    $error = json_decode($response, true);
+    throw new Exception("Error {$statusCode}: " . $error['message']);
+}
+
+$result = json_decode($response, true);
+```
+
+</CodeGroup>
+
+### 2. Validate Input Before Sending
+
+Validate data client-side before making API requests to catch errors early:
+
+```javascript
+function validateBookingData(booking) {
+  // Validate date format (DD-MM-YYYY)
+  const dateRegex = /^\d{2}-\d{2}-\d{4}$/;
+  if (!dateRegex.test(booking.date)) {
+    throw new Error('Invalid date format. Use DD-MM-YYYY');
+  }
+
+  // Validate time format (HH:mm)
+  const timeRegex = /^\d{2}:\d{2}$/;
+  if (!timeRegex.test(booking.startTime)) {
+    throw new Error('Invalid time format. Use HH:mm');
+  }
+
+  // Validate required fields
+  if (!booking.pax) {
+    throw new Error('Number of attendees (pax) is required');
+  }
+
+  return true;
+}
+```
+
+### 3. Implement Retry Logic
+
+For 500 errors, implement exponential backoff retry logic:
+
+```javascript
+async function apiRequestWithRetry(url, options, maxRetries = 3) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(url, options);
+
+      if (response.ok) {
+        return await response.json();
+      }
+
+      // Don't retry on 400 errors (client errors)
+      if (response.status === 400) {
+        const error = await response.json();
+        throw new Error(error.message);
+      }
+
+      // Retry on 500 errors
+      if (response.status === 500 && attempt < maxRetries) {
+        const delay = Math.pow(2, attempt) * 1000; // Exponential backoff
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+
+      throw new Error(`HTTP ${response.status}`);
+    } catch (error) {
+      if (attempt === maxRetries) throw error;
+    }
+  }
+}
+```
+
+### 4. Log Errors for Debugging
+
+Always log errors with sufficient context:
+
+```javascript
+try {
+  const result = await createEvent(bookingData);
+  console.log('Event created successfully:', result);
+} catch (error) {
+  console.error('Failed to create event:', {
+    error: error.message,
+    timestamp: new Date().toISOString(),
+    payload: bookingData,
+    endpoint: '/events/create'
+  });
+
+  // Handle error appropriately (show user message, retry, etc.)
+}
+```
+
+## Need More Help?
+
+<CardGroup cols={2}>
+  <Card title="Quickstart Guide" icon="rocket" href="/api-reference/quickstart">
+    Review the quickstart guide for working examples
+  </Card>
+
+  <Card title="Contact Support" icon="life-ring" href="mailto:support@bookingshake.com">
+    Get help from our support team
+  </Card>
+</CardGroup>

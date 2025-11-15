@@ -1,33 +1,110 @@
 ---
-title: 'Introduction'
-description: 'Example section for showcasing API endpoints'
+title: "Introduction"
+description: "Welcome to the BookingShake API documentation. Automate event creation and manage bookings programmatically."
 ---
 
+## Welcome to BookingShake API
+
+The BookingShake API provides a simple, RESTful interface for integrating event and booking management into your applications. Whether you're building a custom booking form, integrating with your existing systems, or automating event creation, our API makes it easy.
+
+## Base URL
+
+All API requests should be made to:
+
+```
+https://api.bookingshake.io/api
+```
+
+## API Version
+
+Current version: **v1.0**
+
+## What You Can Do
+
+<CardGroup cols={2}>
+  <Card title="Create Events" icon="calendar-plus" href="/api-reference/events/create">
+    Create single or multiple bookings with contact and company information
+  </Card>
+
+  <Card title="Manage Resources" icon="database" href="/api-reference/sources">
+    Retrieve booking sources, spaces, and statuses
+  </Card>
+
+  <Card title="Custom Fields" icon="sliders" href="/api-reference/fields">
+    Access all available fields including custom configurations
+  </Card>
+
+  <Card title="Webhooks" icon="webhook" href="/api-reference/webhooks/introduction">
+    Receive real-time notifications when accounts and contacts change
+  </Card>
+
+  <Card title="Authentication" icon="key" href="/api-reference/authentication">
+    Secure API access with Bearer token authentication
+  </Card>
+</CardGroup>
+
+## Key Features
+
+- **Event Creation**: Create one or multiple events in a single request
+- **Contact Management**: Link events to existing contacts or create new ones
+- **Draft Quotations**: Include products to create draft quotations
+- **Resource Management**: Access booking sources, spaces, and statuses
+- **Custom Fields**: Support for venue-specific custom fields
+- **Group Bookings**: Create multiple events that are automatically grouped together
+- **Webhooks**: Real-time event notifications for account and contact changes
+
+## Getting Started
+
+<Steps>
+  <Step title="Get Your API Key">
+    Navigate to **Settings > Integrations** in your BookingShake dashboard and copy your API key.
+  </Step>
+
+  <Step title="Read the Authentication Guide">
+    Learn how to authenticate your requests using Bearer tokens.
+
+    [View Authentication Guide →](/api-reference/authentication)
+  </Step>
+
+  <Step title="Make Your First Request">
+    Follow our quickstart guide to create your first event.
+
+    [View Quickstart Guide →](/api-reference/quickstart)
+  </Step>
+
+  <Step title="Explore Endpoints">
+    Dive into the API reference to discover all available endpoints.
+
+    [Browse API Reference →](/api-reference/events/create)
+  </Step>
+</Steps>
+
+## Need Help?
+
+<CardGroup cols={2}>
+  <Card title="Quickstart Guide" icon="rocket" href="/api-reference/quickstart">
+    Get up and running in minutes with practical examples
+  </Card>
+
+  <Card title="Error Handling" icon="triangle-exclamation" href="/api-reference/errors">
+    Learn about status codes and how to handle errors
+  </Card>
+
+  <Card title="Use Cases" icon="lightbulb" href="/api-reference/use-cases">
+    Real-world examples and integration patterns
+  </Card>
+
+  <Card title="Support" icon="life-ring" href="mailto:support@bookingshake.com">
+    Contact our support team for assistance
+  </Card>
+</CardGroup>
+
+## Rate Limits
+
 <Note>
-  If you're not looking to build API reference documentation, you can delete
-  this section by removing the api-reference folder.
+Currently, there are no enforced rate limits on the BookingShake API. However, we recommend implementing reasonable request throttling in your applications to ensure optimal performance.
 </Note>
 
-## Welcome
+## API Stability
 
-There are two ways to build API documentation: [OpenAPI](https://mintlify.com/docs/api-playground/openapi/setup) and [MDX components](https://mintlify.com/docs/api-playground/mdx/configuration). For the starter kit, we are using the following OpenAPI specification.
-
-<Card
-  title="Plant Store Endpoints"
-  icon="leaf"
-  href="https://github.com/mintlify/starter/blob/main/api-reference/openapi.json"
->
-  View the OpenAPI specification file
-</Card>
-
-## Authentication
-
-All API endpoints are authenticated using Bearer tokens and picked up from the specification file.
-
-```json
-"security": [
-  {
-    "bearerAuth": []
-  }
-]
-```
+The BookingShake API is production-ready and actively maintained. We're committed to backward compatibility and will announce any breaking changes well in advance.

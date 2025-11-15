@@ -1,0 +1,587 @@
+---
+title: "Security & Best Practices"
+description: "Verify webhook authenticity and handle deliveries reliably"
+icon: "shield-halved"
+---
+
+## Overview
+
+Security is critical when receiving webhooks. Always verify that webhook requests actually come from BookingShake before processing them. This guide covers signature verification, idempotency, error handling, and security best practices.
+
+## Verifying Webhook Signatures
+
+**Always verify webhook signatures** to ensure requests come from BookingShake and haven't been tampered with.
+
+### How Signature Verification Works
+
+BookingShake signs each webhook request using HMAC SHA256 with your webhook secret. The signature is included in the `Bookingshake-Signature` header. To verify:
+
+1. Extract the signature from the request header
+2. Compute the HMAC SHA256 hash of the raw request body using your secret
+3. Compare your computed signature with the received signature
+4. Only process the webhook if they match
+
+<Steps>
+  <Step title="Extract the Signature">
+    Get the `Bookingshake-Signature` header from the incoming request.
+  </Step>
+
+  <Step title="Get Your Secret">
+    Retrieve your webhook secret from the dashboard or your secure environment variables.
+  </Step>
+
+  <Step title="Compute HMAC SHA256">
+    Calculate the HMAC SHA256 hash of the raw request body using your secret as the key.
+  </Step>
+
+  <Step title="Compare Signatures">
+    Compare your computed signature with the received signature. If they match, the webhook is authentic.
+  </Step>
+</Steps>
+
+### Code Examples
+
+<CodeGroup>
+
+```javascript Node.js (Express)
+const express = require('express');
+const crypto = require('crypto');
+
+const app = express();
+
+// IMPORTANT: Use raw body for signature verification
+app.use('/webhooks/bookingshake', express.raw({ type: 'application/json' }));
+
+app.post('/webhooks/bookingshake', (req, res) => {
+  const signature = req.headers['bookingshake-signature'];
+  const secret = process.env.BOOKINGSHAKE_WEBHOOK_SECRET;
+
+  // Compute expected signature from raw body
+  const expectedSignature = crypto
+    .createHmac('sha256', secret)
+    .update(req.body)
+    .digest('hex');
+
+  // Verify signature
+  if (signature !== expectedSignature) {
+    console.error('Invalid webhook signature');
+    return res.status(401).send('Invalid signature');
+  }
+
+  // Parse webhook payload
+  const webhook = JSON.parse(req.body);
+  console.log('Verified event:', webhook.event);
+  console.log('Data:', webhook.data);
+
+  // Process webhook asynchronously to respond quickly
+  processWebhook(webhook).catch(err => {
+    console.error('Error processing webhook:', err);
+  });
+
+  // Respond immediately (< 5 seconds)
+  res.status(200).send('OK');
+});
+
+async function processWebhook(webhook) {
+  // Your business logic here
+  switch (webhook.event) {
+    case 'contact.created':
+      await syncContactToExternalCRM(webhook.data);
+      break;
+    case 'account.created':
+      await syncAccountToExternalCRM(webhook.data);
+      break;
+    // Handle other events...
+  }
+}
+
+app.listen(3000, () => {
+  console.log('Webhook server listening on port 3000');
+});
+```
+
+```python Python (Flask)
+from flask import Flask, request, jsonify
+import hmac
+import hashlib
+import json
+import os
+
+app = Flask(__name__)
+
+@app.route('/webhooks/bookingshake', methods=['POST'])
+def webhook():
+    # Get signature from header
+    signature = request.headers.get('Bookingshake-Signature')
+    secret = os.environ.get('BOOKINGSHAKE_WEBHOOK_SECRET')
+
+    # Get raw request body
+    raw_body = request.data
+
+    # Compute expected signature
+    expected_signature = hmac.new(
+        secret.encode('utf-8'),
+        raw_body,
+        hashlib.sha256
+    ).hexdigest()
+
+    # Verify signature
+    if signature != expected_signature:
+        print('Invalid webhook signature')
+        return 'Invalid signature', 401
+
+    # Parse webhook payload
+    webhook = request.get_json()
+    print(f"Verified event: {webhook['event']}")
+    print(f"Data: {webhook['data']}")
+
+    # Process webhook asynchronously
+    process_webhook(webhook)
+
+    # Respond quickly
+    return 'OK', 200
+
+def process_webhook(webhook):
+    # Your business logic here
+    event_type = webhook['event']
+
+    if event_type == 'contact.created':
+        sync_contact_to_crm(webhook['data'])
+    elif event_type == 'account.created':
+        sync_account_to_crm(webhook['data'])
+    # Handle other events...
+
+if __name__ == '__main__':
+    app.run(port=3000)
+```
+
+```php PHP
+<?php
+
+// Get raw POST body (IMPORTANT: Don't use php://input with JSON parsing first)
+$rawBody = file_get_contents('php://input');
+
+// Get signature from header
+$signature = $_SERVER['HTTP_BOOKINGSHAKE_SIGNATURE'] ?? '';
+$secret = getenv('BOOKINGSHAKE_WEBHOOK_SECRET');
+
+// Compute expected signature
+$expectedSignature = hash_hmac('sha256', $rawBody, $secret);
+
+// Verify signature
+if ($signature !== $expectedSignature) {
+    error_log('Invalid webhook signature');
+    http_response_code(401);
+    exit('Invalid signature');
+}
+
+// Parse webhook payload
+$webhook = json_decode($rawBody, true);
+error_log("Verified event: " . $webhook['event']);
+error_log("Data: " . json_encode($webhook['data']));
+
+// Process webhook asynchronously
+processWebhook($webhook);
+
+// Respond quickly
+http_response_code(200);
+echo 'OK';
+
+function processWebhook($webhook) {
+    // Your business logic here
+    switch ($webhook['event']) {
+        case 'contact.created':
+            syncContactToCRM($webhook['data']);
+            break;
+        case 'account.created':
+            syncAccountToCRM($webhook['data']);
+            break;
+        // Handle other events...
+    }
+}
+```
+
+</CodeGroup>
+
+<Warning>
+  **Critical**: Always use the raw request body for signature verification, not the parsed JSON. Parsing and re-stringifying JSON may change whitespace or ordering, causing signature mismatches.
+</Warning>
+
+## Preventing Duplicate Processing
+
+Webhooks may occasionally be delivered more than once due to network issues or retries. Use the `Idempotency-Key` header to ensure you only process each webhook once.
+
+### Implementation Example
+
+<CodeGroup>
+
+```javascript Node.js (with Redis)
+const Redis = require('redis');
+const redis = Redis.createClient();
+
+app.post('/webhooks/bookingshake', async (req, res) => {
+  // ... verify signature first ...
+
+  const idempotencyKey = req.headers['idempotency-key'];
+
+  // Check if we've already processed this webhook
+  const alreadyProcessed = await redis.get(`webhook:${idempotencyKey}`);
+  if (alreadyProcessed) {
+    console.log('Webhook already processed');
+    return res.status(200).send('Already processed');
+  }
+
+  // Parse and process webhook
+  const webhook = JSON.parse(req.body);
+  await processWebhook(webhook);
+
+  // Mark as processed (expire after 24 hours)
+  await redis.setex(`webhook:${idempotencyKey}`, 86400, 'processed');
+
+  res.status(200).send('OK');
+});
+```
+
+```javascript Node.js (with Database)
+app.post('/webhooks/bookingshake', async (req, res) => {
+  // ... verify signature first ...
+
+  const idempotencyKey = req.headers['idempotency-key'];
+
+  // Check database for this idempotency key
+  const existing = await db.query(
+    'SELECT id FROM processed_webhooks WHERE idempotency_key = ?',
+    [idempotencyKey]
+  );
+
+  if (existing.length > 0) {
+    return res.status(200).send('Already processed');
+  }
+
+  // Process webhook
+  const webhook = JSON.parse(req.body);
+  await processWebhook(webhook);
+
+  // Store idempotency key
+  await db.query(
+    'INSERT INTO processed_webhooks (idempotency_key, processed_at) VALUES (?, NOW())',
+    [idempotencyKey]
+  );
+
+  res.status(200).send('OK');
+});
+```
+
+```python Python (with Set)
+# Simple in-memory approach (use Redis/DB for production)
+processed_webhooks = set()
+
+@app.route('/webhooks/bookingshake', methods=['POST'])
+def webhook():
+    # ... verify signature first ...
+
+    idempotency_key = request.headers.get('Idempotency-Key')
+
+    # Check if already processed
+    if idempotency_key in processed_webhooks:
+        return 'Already processed', 200
+
+    # Process webhook
+    webhook = request.get_json()
+    process_webhook(webhook)
+
+    # Mark as processed
+    processed_webhooks.add(idempotency_key)
+
+    return 'OK', 200
+```
+
+</CodeGroup>
+
+<Tip>
+  Store idempotency keys in Redis, a database, or persistent storage. In-memory storage (like sets) will lose data when your application restarts.
+</Tip>
+
+## Error Handling and Retries
+
+### Delivery Timeout
+
+Your endpoint must respond within **5 seconds** with an HTTP status code in the `200-299` range. Any other response is considered a failure.
+
+### Retry Policy
+
+BookingShake automatically retries failed webhook deliveries with the following policy:
+
+- **Maximum attempts**: 10
+- **Backoff strategy**: Exponential backoff starting at 10 seconds, up to 1 hour between retries
+- **Total retry window**: Approximately 3 hours for all retry attempts
+
+### Success Response
+
+To acknowledge successful receipt, return an HTTP `200-299` status code:
+
+```javascript
+res.status(200).send('OK');
+```
+
+### Handling Failures
+
+After 10 failed delivery attempts, the webhook status changes to `error` in your dashboard. You'll see:
+
+- The error message describing what went wrong
+- The number of failed deliveries (X/10)
+- The last attempted delivery time
+
+**What to do when a webhook fails:**
+
+1. Check your webhook endpoint is accessible and responding
+2. Verify your server returns `200-299` status codes within 5 seconds
+3. Check application logs for errors
+4. Test signature verification is working correctly
+5. Fix the issue and monitor the dashboard
+
+<Note>
+  Once you fix the issue, the webhook will automatically resume on the next event. You don't need to recreate it.
+</Note>
+
+## Security Requirements
+
+### HTTPS Only
+
+All webhook URLs **must use HTTPS**. HTTP URLs are rejected for security reasons.
+
+**Examples:**
+- ✅ `https://api.example.com/webhooks/bookingshake`
+- ✅ `https://myapp.herokuapp.com/webhooks`
+- ❌ `http://api.example.com/webhooks` (rejected)
+- ❌ `http://localhost:3000/webhooks` (rejected)
+
+### Blocked Destinations
+
+For security, webhooks cannot be delivered to:
+
+- **Localhost addresses**: `127.0.0.1`, `::1`, `0.0.0.0`, `localhost`
+- **Private IP ranges**: `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`
+- **Link-local addresses**: `169.254.0.0/16`
+- **Internal domains**: `.local`, `.internal`, `.localhost`
+- **Metadata servers**: Cloud provider metadata endpoints
+
+These restrictions prevent Server-Side Request Forgery (SSRF) attacks.
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Respond Quickly" icon="bolt">
+    Process webhooks asynchronously and return `200` within 5 seconds. Use queues or background jobs for heavy processing.
+  </Card>
+
+  <Card title="Verify Signatures" icon="shield-check">
+    Always verify the HMAC signature before processing. Never trust the request without verification.
+  </Card>
+
+  <Card title="Handle Duplicates" icon="copy">
+    Use the `Idempotency-Key` header to prevent processing the same webhook twice.
+  </Card>
+
+  <Card title="Log Everything" icon="file-lines">
+    Log all webhook receipts, verifications, and processing results for debugging and auditing.
+  </Card>
+
+  <Card title="Monitor Failures" icon="triangle-exclamation">
+    Regularly check your dashboard for failed webhooks. Set up alerts for webhook errors.
+  </Card>
+
+  <Card title="Secure Your Secret" icon="key">
+    Store webhook secrets in environment variables or secure vaults. Never commit them to version control.
+  </Card>
+
+  <Card title="Use HTTPS" icon="lock">
+    Always use HTTPS endpoints. HTTP is rejected for security.
+  </Card>
+
+  <Card title="Implement Retries" icon="rotate">
+    Handle transient failures gracefully. BookingShake retries automatically, but log failures for investigation.
+  </Card>
+</CardGroup>
+
+## Testing Your Webhook
+
+### Using webhook.site
+
+Test your webhook integration without writing code:
+
+<Steps>
+  <Step title="Get a Test URL">
+    Go to [webhook.site](https://webhook.site) to get a unique temporary URL.
+  </Step>
+
+  <Step title="Create Webhook in BookingShake">
+    In your dashboard, create a new webhook using the webhook.site URL.
+  </Step>
+
+  <Step title="Trigger an Event">
+    Create or update a contact or account in BookingShake.
+  </Step>
+
+  <Step title="View the Payload">
+    Return to webhook.site to see the webhook payload, headers, and signature.
+  </Step>
+</Steps>
+
+### Testing Signature Verification
+
+Test your signature verification logic locally:
+
+```javascript
+const crypto = require('crypto');
+
+// Your webhook secret
+const secret = 'your-webhook-secret-from-dashboard';
+
+// Example webhook body
+const body = JSON.stringify({
+  event: 'contact.created',
+  timestamp: 1731493800000,
+  venue_id: 'venue123',
+  data: {
+    id: 'contact-456',
+    first_name: 'John',
+    last_name: 'Doe'
+  }
+});
+
+// Compute signature
+const signature = crypto
+  .createHmac('sha256', secret)
+  .update(body)
+  .digest('hex');
+
+console.log('Expected signature:', signature);
+```
+
+### Local Development with ngrok
+
+Test webhooks locally using [ngrok](https://ngrok.com):
+
+```bash
+# Start your local server
+node server.js
+
+# In another terminal, expose it with ngrok
+ngrok http 3000
+```
+
+Use the HTTPS URL provided by ngrok (e.g., `https://abc123.ngrok.io/webhooks/bookingshake`) as your webhook URL in BookingShake.
+
+## Managing Webhook Secrets
+
+### Viewing Your Secret
+
+Your webhook secret is displayed once when you create the webhook. Copy and store it securely in your environment variables.
+
+### Regenerating Secrets
+
+If your secret is compromised, regenerate it from the dashboard:
+
+<Steps>
+  <Step title="Navigate to Webhooks">
+    Go to Settings > Integrations > Webhooks in your dashboard.
+  </Step>
+
+  <Step title="Edit Webhook">
+    Click on the webhook you want to update.
+  </Step>
+
+  <Step title="Regenerate Secret">
+    Click "Regenerate Secret" and confirm the action.
+  </Step>
+
+  <Step title="Update Your Application">
+    Copy the new secret and update your application's environment variables immediately.
+  </Step>
+</Steps>
+
+<Warning>
+  **Important**: Regenerating a secret immediately invalidates the old one. Update your application before the next webhook delivery to avoid failures.
+</Warning>
+
+### Zero-Downtime Secret Rotation
+
+For production systems, implement zero-downtime secret rotation:
+
+1. Create a second webhook with a new secret
+2. Update your application to accept both secrets temporarily
+3. Delete the old webhook after confirming the new one works
+4. Remove the old secret from your application
+
+## Webhook Endpoint Checklist
+
+Before going to production, ensure your endpoint:
+
+- [ ] Uses HTTPS (not HTTP)
+- [ ] Verifies webhook signatures using HMAC SHA256
+- [ ] Handles the `Idempotency-Key` to prevent duplicate processing
+- [ ] Responds within 5 seconds with `200-299` status code
+- [ ] Processes webhooks asynchronously (using queues or background jobs)
+- [ ] Logs all webhook receipts and processing results
+- [ ] Handles all subscribed event types
+- [ ] Has error monitoring and alerting set up
+- [ ] Stores webhook secrets securely in environment variables
+- [ ] Has tests for signature verification logic
+
+## Troubleshooting
+
+### Signature Verification Fails
+
+**Common causes:**
+- Using parsed JSON instead of raw body for verification
+- Incorrect secret (check environment variables)
+- Character encoding issues
+- Middleware parsing body before verification
+
+**Solution:** Always compute the signature on the raw request body before any parsing.
+
+### Webhook Status Shows "Error"
+
+**Common causes:**
+- Endpoint not responding within 5 seconds
+- Returning non-2xx status codes
+- SSL/TLS certificate issues
+- Endpoint not accessible from the internet
+
+**Solution:** Check your server logs, ensure quick responses, and verify your endpoint is publicly accessible.
+
+### Receiving Duplicate Webhooks
+
+**Cause:** Network issues or retries after timeouts.
+
+**Solution:** Implement idempotency using the `Idempotency-Key` header.
+
+### Not Receiving Webhooks
+
+**Checklist:**
+1. Verify the webhook is active in the dashboard
+2. Check you've selected the correct event types
+3. Trigger an actual event (create/update a contact)
+4. Ensure your endpoint is publicly accessible
+5. Check firewall rules aren't blocking BookingShake
+
+## Need Help?
+
+<CardGroup cols={2}>
+  <Card title="View Webhook Events" icon="arrow-left" href="/api-reference/webhooks/introduction">
+    See available webhook events and payload structures
+  </Card>
+
+  <Card title="Error Reference" icon="triangle-exclamation" href="/api-reference/errors">
+    Learn about error codes and status codes
+  </Card>
+
+  <Card title="API Documentation" icon="code" href="/api-reference/introduction">
+    Explore the BookingShake API
+  </Card>
+
+  <Card title="Contact Support" icon="life-ring" href="mailto:support@bookingshake.com">
+    Get help from our support team
+  </Card>
+</CardGroup>

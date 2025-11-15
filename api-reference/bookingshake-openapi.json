@@ -1,0 +1,1120 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "BookingShake API",
+    "description": "The BookingShake API allows you to programmatically create and manage events, bookings, and related resources. Integrate BookingShake with your applications to automate event creation, retrieve booking sources, spaces, statuses, and custom fields.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "BookingShake Support",
+      "email": "support@bookingshake.com",
+      "url": "https://bookingshake.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.bookingshake.io/api",
+      "description": "Production server"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Events",
+      "description": "Create and manage events and bookings"
+    },
+    {
+      "name": "Resources",
+      "description": "Retrieve booking sources, spaces, and statuses"
+    },
+    {
+      "name": "Fields",
+      "description": "Retrieve available custom and default fields"
+    }
+  ],
+  "paths": {
+    "/events/create": {
+      "post": {
+        "summary": "Create events",
+        "description": "Create one or several events (bookings) with contact information and optional company details. Multiple bookings in a single request will be grouped together. Optionally include products to create a draft quotation.",
+        "operationId": "createEvents",
+        "tags": ["Events"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEventRequest"
+              },
+              "examples": {
+                "single-event": {
+                  "summary": "Single event",
+                  "description": "Create a single event with basic information",
+                  "value": {
+                    "bookings": [
+                      {
+                        "date": "15-03-2025",
+                        "startTime": "14:00",
+                        "endTime": "18:00",
+                        "pax": "50",
+                        "event_type": "Corporate Event",
+                        "comments": "Setup needed at 13:00"
+                      }
+                    ],
+                    "contact": {
+                      "first_name": "John",
+                      "last_name": "Doe",
+                      "email": "john.doe@example.com",
+                      "phone": "+33123456789"
+                    },
+                    "source_slug": "website"
+                  }
+                },
+                "multiple-events": {
+                  "summary": "Multiple events (group booking)",
+                  "description": "Create multiple events in a single request - they will be grouped together",
+                  "value": {
+                    "bookings": [
+                      {
+                        "date": "15-03-2025",
+                        "startTime": "09:00",
+                        "endTime": "12:00",
+                        "pax": "30",
+                        "space_id": "space_abc123",
+                        "event_type": "Workshop"
+                      },
+                      {
+                        "date": "15-03-2025",
+                        "startTime": "14:00",
+                        "endTime": "17:00",
+                        "pax": "30",
+                        "space_id": "space_abc123",
+                        "event_type": "Workshop"
+                      }
+                    ],
+                    "contact": {
+                      "first_name": "Jane",
+                      "last_name": "Smith",
+                      "email": "jane.smith@company.com",
+                      "phone": "+33987654321"
+                    },
+                    "company": {
+                      "name": "Tech Corp",
+                      "address_line_1": "456 Innovation Ave",
+                      "city": "Lyon",
+                      "country": "France"
+                    }
+                  }
+                },
+                "event-with-products": {
+                  "summary": "Event with products (draft quotation)",
+                  "description": "Create an event with products to generate a draft quotation",
+                  "value": {
+                    "bookings": [
+                      {
+                        "date": "20-04-2025",
+                        "startTime": "10:00",
+                        "endTime": "16:00",
+                        "pax": "100",
+                        "event_type": "Conference",
+                        "products": [
+                          {
+                            "title": "Conference Room Package",
+                            "quantity": 1,
+                            "price_without_tax": 50000,
+                            "vat": 2000
+                          },
+                          {
+                            "title": "Catering Service",
+                            "quantity": 100,
+                            "price_without_tax": 2500,
+                            "vat": 1000
+                          },
+                          {
+                            "title": "AV Equipment",
+                            "quantity": 1,
+                            "price_without_tax": 15000,
+                            "vat": 2000
+                          }
+                        ]
+                      }
+                    ],
+                    "contact": {
+                      "first_name": "Alice",
+                      "last_name": "Johnson",
+                      "email": "alice@events.com",
+                      "phone": "+33111222333",
+                      "position": "Event Coordinator"
+                    },
+                    "company": {
+                      "name": "Global Events Inc",
+                      "siret": "12345678901234",
+                      "address_line_1": "789 Business Blvd",
+                      "postal_code": "75001",
+                      "city": "Paris",
+                      "country": "France"
+                    },
+                    "source_slug": "direct"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Events created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                },
+                "example": {
+                  "message": "success"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "missing-token": {
+                    "summary": "Missing authentication token",
+                    "value": {
+                      "message": "missing token"
+                    }
+                  },
+                  "invalid-token": {
+                    "summary": "Invalid authentication token",
+                    "value": {
+                      "message": "invalid token"
+                    }
+                  },
+                  "empty-body": {
+                    "summary": "Empty request body",
+                    "value": {
+                      "message": "body is empty"
+                    }
+                  },
+                  "invalid-body": {
+                    "summary": "Invalid request body format",
+                    "value": {
+                      "message": "invalid body"
+                    }
+                  },
+                  "missing-bookings": {
+                    "summary": "Missing bookings array",
+                    "value": {
+                      "message": "missing bookings"
+                    }
+                  },
+                  "missing-contact": {
+                    "summary": "Missing contact information",
+                    "value": {
+                      "message": "missing contact"
+                    }
+                  },
+                  "invalid-date": {
+                    "summary": "Invalid date format",
+                    "value": {
+                      "message": "date format must be DD-MM-YYYY"
+                    }
+                  },
+                  "invalid-time": {
+                    "summary": "Invalid time format",
+                    "value": {
+                      "message": "startTime format must be HH:mm"
+                    }
+                  },
+                  "invalid-endtime": {
+                    "summary": "Invalid endTime format",
+                    "value": {
+                      "message": "endTime format must be HH:mm"
+                    }
+                  },
+                  "missing-pax": {
+                    "summary": "Missing number of attendees",
+                    "value": {
+                      "message": "missing pax"
+                    }
+                  },
+                  "invalid-space": {
+                    "summary": "Invalid space ID",
+                    "value": {
+                      "message": "invalid space"
+                    }
+                  },
+                  "invalid-source": {
+                    "summary": "Invalid source",
+                    "value": {
+                      "message": "invalid source"
+                    }
+                  },
+                  "bookings-must-be-array": {
+                    "summary": "Bookings must be an array",
+                    "value": {
+                      "message": "bookings must be an array"
+                    }
+                  },
+                  "missing-date": {
+                    "summary": "Missing date in booking",
+                    "value": {
+                      "message": "missing date"
+                    }
+                  },
+                  "missing-startTime": {
+                    "summary": "Missing start time in booking",
+                    "value": {
+                      "message": "missing startTime"
+                    }
+                  },
+                  "missing-contact-firstname": {
+                    "summary": "Missing contact first name",
+                    "value": {
+                      "message": "missing contact first_name"
+                    }
+                  },
+                  "missing-contact-lastname": {
+                    "summary": "Missing contact last name",
+                    "value": {
+                      "message": "missing contact last_name"
+                    }
+                  },
+                  "missing-contact-email": {
+                    "summary": "Missing contact email",
+                    "value": {
+                      "message": "missing contact email"
+                    }
+                  },
+                  "invalid-contact-id": {
+                    "summary": "Invalid contact ID",
+                    "value": {
+                      "message": "invalid contact_id"
+                    }
+                  },
+                  "invalid-source-slug": {
+                    "summary": "Invalid source slug",
+                    "value": {
+                      "message": "invalid source_slug"
+                    }
+                  },
+                  "invalid-source-id": {
+                    "summary": "Invalid source ID",
+                    "value": {
+                      "message": "invalid source_id"
+                    }
+                  },
+                  "invalid-space-ids": {
+                    "summary": "Invalid space ID(s)",
+                    "value": {
+                      "message": "invalid space_id(s)"
+                    }
+                  },
+                  "missing-products-title": {
+                    "summary": "Missing product title",
+                    "value": {
+                      "message": "missing products title"
+                    }
+                  },
+                  "missing-products-quantity": {
+                    "summary": "Missing product quantity",
+                    "value": {
+                      "message": "missing products quantity"
+                    }
+                  },
+                  "missing-products-price": {
+                    "summary": "Missing product price without tax",
+                    "value": {
+                      "message": "missing products price_without_tax"
+                    }
+                  },
+                  "missing-products-vat": {
+                    "summary": "Missing product VAT",
+                    "value": {
+                      "message": "missing products vat"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sources": {
+      "get": {
+        "summary": "List booking sources",
+        "description": "Retrieve all booking sources (channels) available for your venue. Sources represent where bookings originate from (e.g., Website, Phone, Email, Walk-in).",
+        "operationId": "getSources",
+        "tags": ["Resources"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of booking sources retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Source"
+                  }
+                },
+                "example": [
+                  {
+                    "value": "JKd8f3mP2xQw",
+                    "label": "Site web"
+                  },
+                  {
+                    "value": "NmR5t9Kl3zXc",
+                    "label": "Téléphone"
+                  },
+                  {
+                    "value": "Qz7Hp4Ln8wYt",
+                    "label": "Email"
+                  },
+                  {
+                    "value": "Vb2Mx6Nk9rPq",
+                    "label": "Sur place"
+                  }
+                ]
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "invalid token"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/spaces": {
+      "get": {
+        "summary": "List spaces",
+        "description": "Retrieve all spaces (rooms/areas) available at your venue. Spaces represent the physical locations where events can be held.",
+        "operationId": "getSpaces",
+        "tags": ["Resources"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of spaces retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Space"
+                  }
+                },
+                "example": [
+                  {
+                    "value": "Lp9Xt2Kj5mQw",
+                    "label": "Salle de conférence A"
+                  },
+                  {
+                    "value": "Hn4Yr8Pl6nZx",
+                    "label": "Salle de conférence B"
+                  },
+                  {
+                    "value": "Rt3Ws7Gk2bVc",
+                    "label": "Grand Ballroom"
+                  },
+                  {
+                    "value": "Pq5Jn9Zm4fLt",
+                    "label": "Terrasse panoramique"
+                  }
+                ]
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "invalid token"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/status": {
+      "get": {
+        "summary": "List booking statuses",
+        "description": "Retrieve all booking statuses available for your venue. Statuses represent the current state of a booking (e.g., Pending, Confirmed, Cancelled).",
+        "operationId": "getStatuses",
+        "tags": ["Resources"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of booking statuses retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Status"
+                  }
+                },
+                "example": [
+                  {
+                    "value": "Dk2Yt5Pm8wQx",
+                    "label": "En attente"
+                  },
+                  {
+                    "value": "Zx8Kp3Qm7nRt",
+                    "label": "Confirmé"
+                  },
+                  {
+                    "value": "Fm6Hj9Lk4rWs",
+                    "label": "Option"
+                  },
+                  {
+                    "value": "Bn7Cx2Vt5pYz",
+                    "label": "Annulé"
+                  }
+                ]
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "invalid token"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fields": {
+      "get": {
+        "summary": "List available fields",
+        "description": "Retrieve all available fields (both default and custom) for your venue. Fields include metadata such as type, collection, code, label, and whether they're required in the back office. Custom fields are automatically merged from both venue-level and venue group-level configurations.",
+        "operationId": "getFields",
+        "tags": ["Fields"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of fields retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Field"
+                  }
+                },
+                "example": [
+                  {
+                    "value": "field_event_type",
+                    "type": "text",
+                    "collection": "reservations",
+                    "code": "event_type",
+                    "label": "Event Type",
+                    "isRequiredInBO": false,
+                    "isCustom": false
+                  },
+                  {
+                    "value": "field_date",
+                    "type": "date",
+                    "collection": "reservations",
+                    "code": "date",
+                    "label": "Date",
+                    "isRequiredInBO": true,
+                    "isCustom": false
+                  },
+                  {
+                    "value": "field_source",
+                    "type": "select",
+                    "collection": "reservations",
+                    "code": "source",
+                    "label": "Source",
+                    "isRequiredInBO": false,
+                    "isCustom": false,
+                    "data": [
+                      {"label": "Website", "value": "src_website"},
+                      {"label": "Phone", "value": "src_phone"}
+                    ]
+                  },
+                  {
+                    "value": "field_pax",
+                    "type": "number",
+                    "collection": "reservations",
+                    "code": "pax",
+                    "label": "Number of Guests",
+                    "isRequiredInBO": true,
+                    "isCustom": false
+                  },
+                  {
+                    "value": "field_firstname",
+                    "type": "text",
+                    "collection": "contacts",
+                    "code": "firstname",
+                    "label": "First Name",
+                    "isRequiredInBO": true,
+                    "isCustom": false
+                  },
+                  {
+                    "value": "field_email",
+                    "type": "email",
+                    "collection": "contacts",
+                    "code": "email",
+                    "label": "Email",
+                    "isRequiredInBO": true,
+                    "isCustom": false
+                  }
+                ]
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "invalid token"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "message": "error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "API Key",
+        "description": "Bearer authentication using your BookingShake API key. Retrieve your API key from Settings > Integrations in your BookingShake dashboard."
+      }
+    },
+    "schemas": {
+      "Product": {
+        "type": "object",
+        "required": ["title", "quantity", "price_without_tax", "vat"],
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Product or service name",
+            "example": "Conference Room Package"
+          },
+          "description": {
+            "type": "string",
+            "description": "Product or service description (optional)",
+            "example": "Full day conference room rental with setup and cleanup"
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "Quantity of the product",
+            "example": 2,
+            "minimum": 1
+          },
+          "price_without_tax": {
+            "type": "integer",
+            "description": "Price in cents without tax",
+            "example": 15000
+          },
+          "vat": {
+            "type": "integer",
+            "description": "VAT rate multiplied by 100 (e.g., 20% = 2000)",
+            "example": 2000
+          }
+        }
+      },
+      "Booking": {
+        "type": "object",
+        "required": ["date", "startTime", "pax"],
+        "properties": {
+          "date": {
+            "type": "string",
+            "description": "Event date in DD-MM-YYYY format",
+            "example": "25-12-2024",
+            "pattern": "^\\d{2}-\\d{2}-\\d{4}$"
+          },
+          "startTime": {
+            "type": "string",
+            "description": "Start time in HH:mm format (24-hour)",
+            "example": "14:30",
+            "pattern": "^\\d{2}:\\d{2}$"
+          },
+          "endTime": {
+            "type": "string",
+            "description": "End time in HH:mm format (24-hour). Optional.",
+            "example": "18:00",
+            "pattern": "^\\d{2}:\\d{2}$"
+          },
+          "pax": {
+            "type": "string",
+            "description": "Number of attendees/guests",
+            "example": "50"
+          },
+          "space_id": {
+            "type": "string",
+            "description": "ID of the space/room. If not specified, uses the default space (marked in settings), or 'Espace indéterminé', or the first available space.",
+            "example": "space_abc123"
+          },
+          "event_type": {
+            "type": "string",
+            "description": "Type or category of event (e.g., Conference, Wedding, Meeting)",
+            "example": "Corporate Event"
+          },
+          "comments": {
+            "type": "string",
+            "description": "Additional notes or special requests for the event",
+            "example": "Please prepare projector and whiteboard"
+          },
+          "products": {
+            "type": "array",
+            "description": "List of products/services to include in the draft quotation",
+            "items": {
+              "$ref": "#/components/schemas/Product"
+            }
+          }
+        }
+      },
+      "Contact": {
+        "type": "object",
+        "description": "Contact information. Either provide contact_id to use an existing contact, or provide first_name, last_name, and email to create a new contact.",
+        "required": ["first_name", "last_name", "email"],
+        "properties": {
+          "contact_id": {
+            "type": "string",
+            "description": "Existing contact ID. If provided, the API uses the existing contact and ignores other contact fields (first_name, last_name, email). If not provided, first_name, last_name, and email are required to create a new contact.",
+            "example": "contact_xyz789"
+          },
+          "first_name": {
+            "type": "string",
+            "description": "Contact's first name",
+            "example": "John"
+          },
+          "last_name": {
+            "type": "string",
+            "description": "Contact's last name",
+            "example": "Doe"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Contact's email address",
+            "example": "john.doe@example.com"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Contact's phone number",
+            "example": "+33123456789"
+          },
+          "position": {
+            "type": "string",
+            "description": "Contact's job title or position",
+            "example": "Event Manager"
+          },
+          "landline_phone": {
+            "type": "string",
+            "description": "Contact's landline phone number",
+            "example": "+33145678901"
+          },
+          "title": {
+            "type": "string",
+            "description": "Contact's title or honorific (e.g., Mr., Mrs., Dr.)",
+            "example": "Mr."
+          },
+          "optin_marketing": {
+            "type": "boolean",
+            "description": "Marketing communications opt-in status",
+            "example": true
+          },
+          "optin_general": {
+            "type": "boolean",
+            "description": "General communications opt-in status",
+            "example": true
+          },
+          "address_line_1": {
+            "type": "string",
+            "description": "Contact's address line 1",
+            "example": "123 Main Street"
+          },
+          "address_line_2": {
+            "type": "string",
+            "description": "Contact's address line 2 (apartment, suite, etc.)",
+            "example": "Apt 4B"
+          },
+          "postal_code": {
+            "type": "string",
+            "description": "Contact's postal/ZIP code",
+            "example": "75001"
+          },
+          "city": {
+            "type": "string",
+            "description": "Contact's city",
+            "example": "Paris"
+          },
+          "country": {
+            "type": "string",
+            "description": "Contact's country",
+            "example": "France"
+          }
+        }
+      },
+      "Company": {
+        "type": "object",
+        "description": "Company/organization information (optional). Note: A company will only be created if the 'name' field is provided. If the company object is omitted or provided without a name, no company will be created.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Company or organization name",
+            "example": "Acme Corporation"
+          },
+          "legal_name": {
+            "type": "string",
+            "description": "Legal name of the company (dénomination sociale)",
+            "example": "Acme Corporation SARL"
+          },
+          "company_type": {
+            "type": "string",
+            "description": "Type of company (e.g., SARL, SAS, SA)",
+            "example": "SARL"
+          },
+          "company_registration_id": {
+            "type": "string",
+            "description": "SIREN number (French company registration ID)",
+            "example": "123456789"
+          },
+          "siret": {
+            "type": "string",
+            "description": "SIRET number (French business identification)",
+            "example": "12345678901234"
+          },
+          "vat_number": {
+            "type": "string",
+            "description": "VAT number (numéro de TVA)",
+            "example": "FR12345678901"
+          },
+          "rcs_number": {
+            "type": "string",
+            "description": "RCS registration number",
+            "example": "Paris B 123 456 789"
+          },
+          "sector": {
+            "type": "string",
+            "description": "Business sector or industry",
+            "example": "Technology"
+          },
+          "address_line_1": {
+            "type": "string",
+            "description": "Company address line 1",
+            "example": "123 Main Street"
+          },
+          "address_line_2": {
+            "type": "string",
+            "description": "Company address line 2 (building, floor, etc.)",
+            "example": "Building A, 3rd Floor"
+          },
+          "postal_code": {
+            "type": "string",
+            "description": "Postal/ZIP code",
+            "example": "75001"
+          },
+          "city": {
+            "type": "string",
+            "description": "City name",
+            "example": "Paris"
+          },
+          "country": {
+            "type": "string",
+            "description": "Country name",
+            "example": "France"
+          },
+          "billing_address_line_1": {
+            "type": "string",
+            "description": "Billing address line 1",
+            "example": "456 Billing Ave"
+          },
+          "billing_address_line_2": {
+            "type": "string",
+            "description": "Billing address line 2",
+            "example": "Suite 100"
+          },
+          "billing_postal_code": {
+            "type": "string",
+            "description": "Billing postal/ZIP code",
+            "example": "75002"
+          },
+          "billing_city": {
+            "type": "string",
+            "description": "Billing city",
+            "example": "Paris"
+          },
+          "billing_country": {
+            "type": "string",
+            "description": "Billing country",
+            "example": "France"
+          }
+        }
+      },
+      "CreateEventRequest": {
+        "type": "object",
+        "required": ["bookings", "contact"],
+        "properties": {
+          "bookings": {
+            "type": "array",
+            "description": "Array of one or more bookings to create. Multiple bookings will be grouped together.",
+            "items": {
+              "$ref": "#/components/schemas/Booking"
+            },
+            "minItems": 1
+          },
+          "contact": {
+            "$ref": "#/components/schemas/Contact"
+          },
+          "company": {
+            "$ref": "#/components/schemas/Company"
+          },
+          "source_slug": {
+            "type": "string",
+            "description": "Booking source slug identifier. Found in Settings > Sources. If not provided, uses the default source (marked in settings), or 'Site web', or the first available source.",
+            "example": "website"
+          },
+          "source_id": {
+            "type": "string",
+            "description": "Booking source ID. Alternative to source_slug. If neither source_slug nor source_id is provided, uses the default source (marked in settings), or 'Site web', or the first available source.",
+            "example": "src_abc123"
+          }
+        }
+      },
+      "Source": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "description": "Source ID",
+            "example": "JKd8f3mP2xQw"
+          },
+          "label": {
+            "type": "string",
+            "description": "Source display name (may be in French or configured language)",
+            "example": "Site web"
+          }
+        }
+      },
+      "Space": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "description": "Space ID",
+            "example": "Lp9Xt2Kj5mQw"
+          },
+          "label": {
+            "type": "string",
+            "description": "Space display name (may be in French or configured language)",
+            "example": "Salle de conférence A"
+          }
+        }
+      },
+      "Status": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "description": "Status ID",
+            "example": "Zx8Kp3Qm7nRt"
+          },
+          "label": {
+            "type": "string",
+            "description": "Status display name (may be in French or configured language)",
+            "example": "Confirmé"
+          }
+        }
+      },
+      "Field": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "description": "Unique field identifier",
+            "example": "custom_field_abc123"
+          },
+          "type": {
+            "type": "string",
+            "description": "Field type (e.g., text, number, date, select)",
+            "example": "text"
+          },
+          "collection": {
+            "type": "string",
+            "description": "Database collection the field belongs to",
+            "example": "reservations"
+          },
+          "code": {
+            "type": "string",
+            "description": "Field code/identifier",
+            "example": "event_type"
+          },
+          "label": {
+            "type": "string",
+            "description": "Field display label (translated based on venue's default language)",
+            "example": "Event Type"
+          },
+          "isRequiredInBO": {
+            "type": "boolean",
+            "description": "Whether the field is required in the back office",
+            "example": false
+          },
+          "isCustom": {
+            "type": "boolean",
+            "description": "Indicates if this is a custom field (true) or a default system field (false)",
+            "example": false
+          },
+          "data": {
+            "type": "array",
+            "description": "Additional data for select-type fields (list of available options)",
+            "items": {
+              "type": "object"
+            },
+            "example": [
+              {"label": "Option 1", "value": "opt1"},
+              {"label": "Option 2", "value": "opt2"}
+            ]
+          }
+        }
+      },
+      "SuccessResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "success"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Error message describing what went wrong",
+            "example": "invalid token"
+          }
+        }
+      }
+    }
+  }
+}

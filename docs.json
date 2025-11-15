@@ -1,122 +1,113 @@
 {
-  "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "bookingshake-docs",
-  "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
-  },
-  "favicon": "/favicon.svg",
-  "navigation": {
-    "tabs": [
-      {
-        "tab": "Guides",
-        "groups": [
-          {
-            "group": "Getting started",
-            "pages": [
-              "index",
-              "quickstart",
-              "development"
-            ]
-          },
-          {
-            "group": "Customization",
-            "pages": [
-              "essentials/settings",
-              "essentials/navigation"
-            ]
-          },
-          {
-            "group": "Writing content",
-            "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
-            ]
-          },
-          {
-            "group": "AI tools",
-            "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "API reference",
-        "groups": [
-          {
-            "group": "API documentation",
-            "pages": [
-              "api-reference/introduction"
-            ]
-          },
-          {
-            "group": "Endpoint examples",
-            "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
-            ]
-          }
-        ]
-      }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
-  },
-  "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
-    }
-  },
-  "contextual": {
-    "options": [
-      "copy",
-      "view",
-      "chatgpt",
-      "claude",
-      "perplexity",
-      "mcp",
-      "cursor",
-      "vscode"
-    ]
-  },
-  "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
-    }
-  }
+	"$schema": "https://mintlify.com/docs.json",
+	"theme": "mint",
+	"name": "BookingShake API",
+	"colors": {
+		"primary": "#FFCD00",
+		"light": "#FFD633",
+		"dark": "#E6BA00"
+	},
+	"favicon": "/favicon.ico",
+	"navigation": {
+		"tabs": [
+			{
+				"tab": "Documentation",
+				"groups": [
+					{
+						"group": "Getting Started",
+						"pages": [
+							"api-reference/introduction",
+							"api-reference/authentication",
+							"api-reference/quickstart"
+						]
+					},
+					{
+						"group": "Webhooks",
+						"pages": [
+							"api-reference/webhooks/introduction",
+							"api-reference/webhooks/security"
+						]
+					},
+					{
+						"group": "Guides",
+						"pages": [
+							"api-reference/errors",
+							"api-reference/use-cases"
+						]
+					}
+				]
+			},
+			{
+				"tab": "API Reference",
+				"openapi": "/api-reference/bookingshake-openapi.json",
+				"groups": [
+					{
+						"group": "Events",
+						"pages": [
+							"POST /events/create"
+						]
+					},
+					{
+						"group": "Resources",
+						"pages": [
+							"GET /sources",
+							"GET /spaces",
+							"GET /status"
+						]
+					},
+					{
+						"group": "Fields",
+						"pages": [
+							"GET /fields"
+						]
+					}
+				]
+			}
+		],
+		"global": {
+			"anchors": [
+				{
+					"anchor": "Website",
+					"href": "https://bookingshake.com",
+					"icon": "globe"
+				},
+				{
+					"anchor": "Dashboard",
+					"href": "https://crm.bookingshake.com",
+					"icon": "browser"
+				}
+			]
+		}
+	},
+	"logo": {
+		"light": "/logo/bookingshake_logo.png",
+		"dark": "/logo/bookingshake_logo.png"
+	},
+	"navbar": {
+		"links": [
+			{
+				"label": "Support",
+				"href": "mailto:support@bookingshake.com"
+			}
+		],
+		"primary": {
+			"type": "button",
+			"label": "Dashboard",
+			"href": "https://crm.bookingshake.com"
+		}
+	},
+	"api": {
+		"baseUrl": "https://api.bookingshake.io/api",
+		"auth": {
+			"method": "bearer"
+		}
+	},
+	"contextual": {
+		"options": ["copy", "view", "chatgpt", "claude", "perplexity", "mcp", "cursor", "vscode"]
+	},
+	"footer": {
+		"socials": {
+			"linkedin": "https://linkedin.com/company/bookingshake"
+		}
+	}
 }
