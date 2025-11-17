@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "BookingShake API",
-    "description": "The BookingShake API allows you to programmatically create and manage events, bookings, and related resources. Integrate BookingShake with your applications to automate event creation, retrieve booking sources, spaces, statuses, and custom fields.",
+    "description": "The BookingShake API allows you to programmatically create and manage events, bookings, and related resources. Integrate BookingShake with your applications to automate event creation, retrieve booking sources, spaces, statuses, and custom fields.\n\n**Rate Limiting:** All endpoints are rate limited per API key. POST /events/create allows 10 requests per minute, while GET endpoints allow 60 requests per minute. Rate limit information is provided in response headers (X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset).",
     "version": "1.0.0",
     "contact": {
       "name": "BookingShake Support",
@@ -172,6 +172,26 @@
         "responses": {
           "200": {
             "description": "Events created successfully",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Maximum requests allowed per minute (10 for this endpoint)"
+              },
+              "X-RateLimit-Remaining": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Requests remaining in the current window"
+              },
+              "X-RateLimit-Reset": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Unix timestamp when the rate limit resets"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -351,6 +371,52 @@
               }
             }
           },
+          "429": {
+            "description": "Rate limit exceeded - too many requests",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Maximum requests allowed per minute"
+              },
+              "X-RateLimit-Remaining": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Requests remaining (always 0 on 429)"
+              },
+              "X-RateLimit-Reset": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Unix timestamp when the rate limit resets"
+              },
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Seconds to wait before retrying"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RateLimitResponse"
+                },
+                "example": {
+                  "message": "Rate limit exceeded",
+                  "data": {
+                    "limit": 10,
+                    "window": "60 seconds",
+                    "remaining": 0,
+                    "resetAt": "2025-11-17T14:30:00.000Z",
+                    "retryAfter": 45
+                  }
+                }
+              }
+            }
+          },
           "500": {
             "description": "Internal server error",
             "content": {
@@ -381,6 +447,26 @@
         "responses": {
           "200": {
             "description": "List of booking sources retrieved successfully",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Maximum requests allowed per minute (60 for this endpoint)"
+              },
+              "X-RateLimit-Remaining": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Requests remaining in the current window"
+              },
+              "X-RateLimit-Reset": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Unix timestamp when the rate limit resets"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -423,6 +509,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimitExceeded"
+          },
           "500": {
             "description": "Internal server error",
             "content": {
@@ -453,6 +542,26 @@
         "responses": {
           "200": {
             "description": "List of spaces retrieved successfully",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Maximum requests allowed per minute (60 for this endpoint)"
+              },
+              "X-RateLimit-Remaining": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Requests remaining in the current window"
+              },
+              "X-RateLimit-Reset": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Unix timestamp when the rate limit resets"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -495,6 +604,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimitExceeded"
+          },
           "500": {
             "description": "Internal server error",
             "content": {
@@ -525,6 +637,26 @@
         "responses": {
           "200": {
             "description": "List of booking statuses retrieved successfully",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Maximum requests allowed per minute (60 for this endpoint)"
+              },
+              "X-RateLimit-Remaining": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Requests remaining in the current window"
+              },
+              "X-RateLimit-Reset": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Unix timestamp when the rate limit resets"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -567,6 +699,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimitExceeded"
+          },
           "500": {
             "description": "Internal server error",
             "content": {
@@ -597,6 +732,26 @@
         "responses": {
           "200": {
             "description": "List of fields retrieved successfully",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Maximum requests allowed per minute (60 for this endpoint)"
+              },
+              "X-RateLimit-Remaining": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Requests remaining in the current window"
+              },
+              "X-RateLimit-Reset": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Unix timestamp when the rate limit resets"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -681,6 +836,9 @@
               }
             }
           },
+          "429": {
+            "$ref": "#/components/responses/RateLimitExceeded"
+          },
           "500": {
             "description": "Internal server error",
             "content": {
@@ -730,13 +888,16 @@
           },
           "price_without_tax": {
             "type": "integer",
-            "description": "Price in cents without tax",
-            "example": 15000
+            "description": "Price in cents (centimes) without tax. NOT in euros/dollars. Example: €150.00 = 15000 cents, €35.50 = 3550 cents",
+            "example": 15000,
+            "minimum": 0
           },
           "vat": {
             "type": "integer",
-            "description": "VAT rate multiplied by 100 (e.g., 20% = 2000)",
-            "example": 2000
+            "description": "VAT rate in basis points (1/100th of a percent). NOT a percentage. Example: 20% = 2000, 10% = 1000, 5.5% = 550. Range: 0-10000 (0% to 100%)",
+            "example": 2000,
+            "minimum": 0,
+            "maximum": 10000
           }
         }
       },
@@ -1112,6 +1273,95 @@
             "type": "string",
             "description": "Error message describing what went wrong",
             "example": "invalid token"
+          }
+        }
+      },
+      "RateLimitResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Error message",
+            "example": "Rate limit exceeded"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "limit": {
+                "type": "integer",
+                "description": "Maximum requests allowed per window",
+                "example": 10
+              },
+              "window": {
+                "type": "string",
+                "description": "Time window duration",
+                "example": "60 seconds"
+              },
+              "remaining": {
+                "type": "integer",
+                "description": "Requests remaining (always 0 on rate limit error)",
+                "example": 0
+              },
+              "resetAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "ISO 8601 timestamp when the limit resets",
+                "example": "2025-11-17T14:30:00.000Z"
+              },
+              "retryAfter": {
+                "type": "integer",
+                "description": "Seconds to wait before retrying",
+                "example": 45
+              }
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "RateLimitExceeded": {
+        "description": "Rate limit exceeded - too many requests",
+        "headers": {
+          "X-RateLimit-Limit": {
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Maximum requests allowed per minute"
+          },
+          "X-RateLimit-Remaining": {
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Requests remaining (always 0 on 429)"
+          },
+          "X-RateLimit-Reset": {
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Unix timestamp when the rate limit resets"
+          },
+          "Retry-After": {
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Seconds to wait before retrying"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/RateLimitResponse"
+            },
+            "example": {
+              "message": "Rate limit exceeded",
+              "data": {
+                "limit": 60,
+                "window": "60 seconds",
+                "remaining": 0,
+                "resetAt": "2025-11-17T14:30:00.000Z",
+                "retryAfter": 45
+              }
+            }
           }
         }
       }

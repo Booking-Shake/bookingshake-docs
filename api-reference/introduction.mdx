@@ -99,11 +99,50 @@ Current version: **v1.0**
   </Card>
 </CardGroup>
 
+## Important Data Formats
+
+<AccordionGroup>
+  <Accordion title="Pricing Format (Products/Quotations)" icon="euro-sign">
+    When creating events with products for draft quotations, prices and VAT must use specific formats:
+
+    **Prices (`price_without_tax`)**:
+    - Provided in **cents/centimes**, not euros/dollars
+    - Example: €150.00 = `150000` cents
+    - Example: €35.50 = `3550` cents
+
+    **VAT (`vat`)**:
+    - Provided in **basis points** (1/100th of a percent), not percentages
+    - Example: 20% VAT = `2000` basis points
+    - Example: 10% VAT = `1000` basis points
+    - Example: 5.5% VAT = `550` basis points
+    - Valid range: `0` to `10000` (0% to 100%)
+
+    **Why this format?**
+    This ensures precision for financial calculations and avoids floating-point rounding errors.
+  </Accordion>
+
+  <Accordion title="Date and Time Format" icon="calendar">
+    All dates and times must follow specific formats:
+
+    **Dates**:
+    - Format: `DD-MM-YYYY`
+    - Example: `"15-03-2025"` for March 15, 2025
+
+    **Times**:
+    - Format: `HH:mm` (24-hour format)
+    - Example: `"14:30"` for 2:30 PM
+    - Example: `"09:00"` for 9:00 AM
+  </Accordion>
+</AccordionGroup>
+
 ## Rate Limits
 
-<Note>
-Currently, there are no enforced rate limits on the BookingShake API. However, we recommend implementing reasonable request throttling in your applications to ensure optimal performance.
-</Note>
+The BookingShake API implements rate limiting to ensure fair usage and service quality:
+
+- **POST /events/create**: 10 requests per minute
+- **GET endpoints** (sources, spaces, status, fields): 60 requests per minute
+
+Rate limit information is provided in response headers. See the [Rate Limiting Guide](/api-reference/rate-limiting) for details.
 
 ## API Stability
 

@@ -1,0 +1,559 @@
+---
+title: "Rate Limiting"
+description: "Understand API rate limits, headers, and how to handle rate limit errors"
+icon: "gauge-high"
+---
+
+## Overview
+
+The BookingShake API implements rate limiting to ensure fair usage and maintain service quality for all users. Rate limits are applied **per API key** and **per endpoint**, with different limits based on the operation complexity.
+
+<Info>
+  Rate limits are tracked using a **1-minute rolling window**. This means that at any given moment, you can make up to the limit within the previous 60 seconds.
+</Info>
+
+## Rate Limit Table
+
+Different endpoints have different rate limits based on their resource intensity:
+
+| Endpoint | Method | Limit | Window | Use Case |
+|----------|--------|-------|--------|----------|
+| `/events/create` | POST | **10 requests** | 1 minute | Heavy operation - creating bookings |
+| `/sources` | GET | **60 requests** | 1 minute | Light operation - fetching sources |
+| `/spaces` | GET | **60 requests** | 1 minute | Light operation - fetching spaces |
+| `/status` | GET | **60 requests** | 1 minute | Light operation - fetching statuses |
+| `/fields` | GET | **60 requests** | 1 minute | Light operation - fetching fields |
+| Other endpoints | * | **100 requests** | 1 minute | Default limit |
+
+<Warning>
+  **Creating events is resource-intensive** and has a lower limit (10/minute) compared to read operations (60/minute). Plan your integration accordingly, especially for bulk operations.
+</Warning>
+
+## Rate Limit Headers
+
+Every API response includes rate limit information in the following HTTP headers:
+
+| Header | Description | Example |
+|--------|-------------|---------|
+| `X-RateLimit-Limit` | Maximum requests allowed in the window | `60` |
+| `X-RateLimit-Remaining` | Requests remaining in current window | `42` |
+| `X-RateLimit-Reset` | Unix timestamp when the limit resets | `1700234567` |
+
+### Reading Rate Limit Headers
+
+<CodeGroup>
+
+```javascript Node.js
+const response = await fetch('https://api.bookingshake.io/api/sources', {
+  headers: {
+    'Authorization': `Bearer ${apiKey}`
+  }
+});
+
+// Read rate limit headers
+const limit = response.headers.get('X-RateLimit-Limit');
+const remaining = response.headers.get('X-RateLimit-Remaining');
+const reset = response.headers.get('X-RateLimit-Reset');
+
+console.log(`Rate limit: ${remaining}/${limit} requests remaining`);
+console.log(`Resets at: ${new Date(reset * 1000).toISOString()}`);
+
+const data = await response.json();
+```
+
+```python Python
+import requests
+from datetime import datetime
+
+response = requests.get(
+    'https://api.bookingshake.io/api/sources',
+    headers={'Authorization': f'Bearer {api_key}'}
+)
+
+# Read rate limit headers
+limit = response.headers.get('X-RateLimit-Limit')
+remaining = response.headers.get('X-RateLimit-Remaining')
+reset = int(response.headers.get('X-RateLimit-Reset'))
+
+print(f"Rate limit: {remaining}/{limit} requests remaining")
+print(f"Resets at: {datetime.fromtimestamp(reset).isoformat()}")
+
+data = response.json()
+```
+
+```php PHP
+<?php
+
+$ch = curl_init('https://api.bookingshake.io/api/sources');
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_HEADER, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'Authorization: Bearer ' . $apiKey
+]);
+
+$response = curl_exec($ch);
+$headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+$headers = substr($response, 0, $headerSize);
+$body = substr($response, $headerSize);
+
+// Parse headers
+preg_match('/X-RateLimit-Limit: (\d+)/', $headers, $limit);
+preg_match('/X-RateLimit-Remaining: (\d+)/', $headers, $remaining);
+preg_match('/X-RateLimit-Reset: (\d+)/', $headers, $reset);
+
+echo "Rate limit: {$remaining[1]}/{$limit[1]} requests remaining\n";
+echo "Resets at: " . date('c', $reset[1]) . "\n";
+
+curl_close($ch);
+```
+
+</CodeGroup>
+
+<Tip>
+  **Monitor the `X-RateLimit-Remaining` header** to track your usage and avoid hitting rate limits. Implement throttling when this number gets low.
+</Tip>
+
+## 429 Rate Limit Exceeded
+
+When you exceed the rate limit, the API returns a `429 Too Many Requests` response with additional information:
+
+### Response Format
+
+**HTTP Status:** `429 Too Many Requests`
+
+**Headers:**
+```http
+X-RateLimit-Limit: 10
+X-RateLimit-Remaining: 0
+X-RateLimit-Reset: 1700234567
+Retry-After: 45
+```
+
+**Body:**
+```json
+{
+  "message": "Rate limit exceeded",
+  "data": {
+    "limit": 10,
+    "window": "60 seconds",
+    "remaining": 0,
+    "resetAt": "2025-11-17T14:30:00.000Z",
+    "retryAfter": 45
+  }
+}
+```
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `message` | string | Error message |
+| `data.limit` | number | Maximum requests allowed per window |
+| `data.window` | string | Time window duration |
+| `data.remaining` | number | Requests remaining (always 0 on 429) |
+| `data.resetAt` | string | ISO 8601 timestamp when limit resets |
+| `data.retryAfter` | number | Seconds to wait before retrying |
+
+<Info>
+  The `Retry-After` header tells you exactly how many seconds to wait before making another request. Always respect this value to avoid continued throttling.
+</Info>
+
+## Handling Rate Limits
+
+### 1. Detect and Wait
+
+The simplest approach is to detect 429 errors and wait for the specified time:
+
+<CodeGroup>
+
+```javascript Node.js
+async function makeApiRequest(url, options) {
+  const response = await fetch(url, options);
+
+  if (response.status === 429) {
+    const retryAfter = parseInt(response.headers.get('Retry-After'));
+    const error = await response.json();
+
+    console.warn(`Rate limit exceeded. Retrying after ${retryAfter} seconds...`);
+    console.warn(`Limit resets at: ${error.data.resetAt}`);
+
+    // Wait for the specified time
+    await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
+
+    // Retry the request
+    return makeApiRequest(url, options);
+  }
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+
+  return response.json();
+}
+
+// Usage
+try {
+  const data = await makeApiRequest('https://api.bookingshake.io/api/sources', {
+    headers: { 'Authorization': `Bearer ${apiKey}` }
+  });
+  console.log('Success:', data);
+} catch (error) {
+  console.error('Request failed:', error.message);
+}
+```
+
+```python Python
+import time
+import requests
+
+def make_api_request(url, headers):
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 429:
+        retry_after = int(response.headers.get('Retry-After', 60))
+        error = response.json()
+
+        print(f"Rate limit exceeded. Retrying after {retry_after} seconds...")
+        print(f"Limit resets at: {error['data']['resetAt']}")
+
+        # Wait for the specified time
+        time.sleep(retry_after)
+
+        # Retry the request
+        return make_api_request(url, headers)
+
+    response.raise_for_status()
+    return response.json()
+
+# Usage
+try:
+    data = make_api_request(
+        'https://api.bookingshake.io/api/sources',
+        headers={'Authorization': f'Bearer {api_key}'}
+    )
+    print('Success:', data)
+except requests.exceptions.RequestException as error:
+    print(f'Request failed: {error}')
+```
+
+```php PHP
+<?php
+
+function makeApiRequest($url, $apiKey, $maxRetries = 3) {
+    $attempt = 0;
+
+    while ($attempt < $maxRetries) {
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HEADER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Authorization: Bearer ' . $apiKey
+        ]);
+
+        $response = curl_exec($ch);
+        $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+        $headers = substr($response, 0, $headerSize);
+        $body = substr($response, $headerSize);
+
+        curl_close($ch);
+
+        if ($statusCode === 429) {
+            preg_match('/Retry-After: (\d+)/', $headers, $matches);
+            $retryAfter = isset($matches[1]) ? (int)$matches[1] : 60;
+
+            echo "Rate limit exceeded. Retrying after {$retryAfter} seconds...\n";
+
+            sleep($retryAfter);
+            $attempt++;
+            continue;
+        }
+
+        if ($statusCode !== 200) {
+            throw new Exception("HTTP {$statusCode}: {$body}");
+        }
+
+        return json_decode($body, true);
+    }
+
+    throw new Exception('Max retries exceeded');
+}
+
+// Usage
+try {
+    $data = makeApiRequest('https://api.bookingshake.io/api/sources', $apiKey);
+    print_r($data);
+} catch (Exception $e) {
+    echo 'Request failed: ' . $e->getMessage() . "\n";
+}
+
+?>
+```
+
+</CodeGroup>
+
+### 2. Exponential Backoff with Jitter
+
+For production applications, implement exponential backoff with jitter to handle rate limits gracefully:
+
+```javascript
+async function makeRequestWithBackoff(url, options, maxRetries = 5) {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const response = await fetch(url, options);
+
+      if (response.status === 429) {
+        // Get retry-after header or calculate exponential backoff
+        const retryAfter = parseInt(response.headers.get('Retry-After')) ||
+                          Math.min(Math.pow(2, attempt) * 1000, 60000);
+
+        // Add jitter to prevent thundering herd
+        const jitter = Math.random() * 1000;
+        const delay = retryAfter * 1000 + jitter;
+
+        console.warn(`Rate limited. Retrying in ${(delay / 1000).toFixed(2)}s (attempt ${attempt + 1}/${maxRetries})`);
+
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      return response.json();
+
+    } catch (error) {
+      if (attempt === maxRetries - 1) throw error;
+    }
+  }
+
+  throw new Error('Max retries exceeded');
+}
+```
+
+### 3. Request Queue with Rate Limiter
+
+For applications making many requests, implement a queue with built-in rate limiting:
+
+```javascript
+class RateLimitedQueue {
+  constructor(requestsPerMinute) {
+    this.requestsPerMinute = requestsPerMinute;
+    this.queue = [];
+    this.processing = false;
+    this.requestTimes = [];
+  }
+
+  async add(requestFn) {
+    return new Promise((resolve, reject) => {
+      this.queue.push({ requestFn, resolve, reject });
+      this.process();
+    });
+  }
+
+  async process() {
+    if (this.processing || this.queue.length === 0) return;
+
+    this.processing = true;
+
+    while (this.queue.length > 0) {
+      // Remove timestamps older than 1 minute
+      const now = Date.now();
+      this.requestTimes = this.requestTimes.filter(time => now - time < 60000);
+
+      // Check if we can make another request
+      if (this.requestTimes.length >= this.requestsPerMinute) {
+        const oldestRequest = this.requestTimes[0];
+        const waitTime = 60000 - (now - oldestRequest);
+        console.log(`Rate limit buffer - waiting ${waitTime}ms`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+        continue;
+      }
+
+      // Process next request
+      const { requestFn, resolve, reject } = this.queue.shift();
+      this.requestTimes.push(Date.now());
+
+      try {
+        const result = await requestFn();
+        resolve(result);
+      } catch (error) {
+        reject(error);
+      }
+
+      // Small delay between requests
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    this.processing = false;
+  }
+}
+
+// Usage
+const queue = new RateLimitedQueue(10); // 10 requests per minute for /events/create
+
+// Queue multiple requests
+for (let i = 0; i < 20; i++) {
+  queue.add(async () => {
+    const response = await fetch('https://api.bookingshake.io/api/events/create', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(eventData)
+    });
+    return response.json();
+  }).then(result => {
+    console.log(`Event ${i + 1} created successfully`);
+  }).catch(error => {
+    console.error(`Event ${i + 1} failed:`, error.message);
+  });
+}
+```
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Monitor Headers" icon="chart-line">
+    Always check `X-RateLimit-Remaining` to proactively avoid hitting limits. Implement throttling when the count gets low.
+  </Card>
+
+  <Card title="Respect Retry-After" icon="clock">
+    When you receive a 429 response, always wait for the duration specified in the `Retry-After` header before retrying.
+  </Card>
+
+  <Card title="Implement Backoff" icon="arrows-rotate">
+    Use exponential backoff with jitter for automatic retry logic to handle temporary rate limit issues gracefully.
+  </Card>
+
+  <Card title="Use Queues for Bulk" icon="list">
+    For bulk operations, implement a request queue with built-in rate limiting to stay within limits automatically.
+  </Card>
+
+  <Card title="Cache Responses" icon="database">
+    Cache responses from GET endpoints (sources, spaces, status, fields) to reduce unnecessary API calls.
+  </Card>
+
+  <Card title="Batch When Possible" icon="layer-group">
+    Use the batch booking feature of `/events/create` to create multiple events in a single request rather than multiple separate requests.
+  </Card>
+</CardGroup>
+
+## Optimizing for Rate Limits
+
+### 1. Cache Static Resources
+
+Resources like sources, spaces, and statuses rarely change. Cache them locally:
+
+```javascript
+class BookingShakeClient {
+  constructor(apiKey) {
+    this.apiKey = apiKey;
+    this.cache = {
+      sources: null,
+      spaces: null,
+      status: null,
+      lastFetch: {}
+    };
+    this.cacheDuration = 3600000; // 1 hour
+  }
+
+  async getSources(forceRefresh = false) {
+    const now = Date.now();
+    const cacheKey = 'sources';
+
+    if (!forceRefresh &&
+        this.cache[cacheKey] &&
+        (now - this.cache.lastFetch[cacheKey]) < this.cacheDuration) {
+      console.log('Returning cached sources');
+      return this.cache[cacheKey];
+    }
+
+    console.log('Fetching fresh sources from API');
+    const response = await fetch('https://api.bookingshake.io/api/sources', {
+      headers: { 'Authorization': `Bearer ${this.apiKey}` }
+    });
+
+    const data = await response.json();
+    this.cache[cacheKey] = data;
+    this.cache.lastFetch[cacheKey] = now;
+
+    return data;
+  }
+}
+```
+
+### 2. Batch Event Creation
+
+Instead of creating events one by one, batch them:
+
+<Accordion title="Single Request vs Batch">
+**❌ Inefficient - 10 separate requests:**
+```javascript
+// Uses 10 of your 10/minute limit
+for (let booking of bookings) {
+  await createEvent({ bookings: [booking], contact });
+}
+```
+
+**✅ Efficient - 1 request:**
+```javascript
+// Uses only 1 of your 10/minute limit
+await createEvent({
+  bookings: bookings, // Multiple bookings in one request
+  contact
+});
+```
+</Accordion>
+
+### 3. Implement Request Deduplication
+
+Avoid making the same request multiple times:
+
+```javascript
+class RequestDeduplicator {
+  constructor() {
+    this.inFlight = new Map();
+  }
+
+  async request(key, requestFn) {
+    // If request is already in flight, return existing promise
+    if (this.inFlight.has(key)) {
+      console.log(`Request ${key} already in flight, reusing...`);
+      return this.inFlight.get(key);
+    }
+
+    // Start new request
+    const promise = requestFn()
+      .finally(() => this.inFlight.delete(key));
+
+    this.inFlight.set(key, promise);
+    return promise;
+  }
+}
+
+// Usage
+const deduplicator = new RequestDeduplicator();
+
+// Multiple calls with same key will only make one API request
+const [sources1, sources2, sources3] = await Promise.all([
+  deduplicator.request('sources', () => fetchSources()),
+  deduplicator.request('sources', () => fetchSources()),
+  deduplicator.request('sources', () => fetchSources())
+]);
+// Only 1 API call made!
+```
+
+## Need Help?
+
+<CardGroup cols={2}>
+  <Card title="Error Handling" icon="triangle-exclamation" href="/api-reference/errors">
+    Learn about all error codes and how to handle them
+  </Card>
+
+  <Card title="Contact Support" icon="life-ring" href="mailto:support@bookingshake.com">
+    Get help optimizing your integration
+  </Card>
+</CardGroup>

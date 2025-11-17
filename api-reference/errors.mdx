@@ -14,6 +14,8 @@ The BookingShake API uses standard HTTP status codes to indicate the success or 
 |-------------|---------|-------------|
 | `200` | Success | Request completed successfully |
 | `400` | Bad Request | Invalid request parameters or authentication error |
+| `403` | Forbidden | Access denied to the requested resource |
+| `429` | Too Many Requests | Rate limit exceeded |
 | `500` | Internal Server Error | Something went wrong on our end |
 
 ## Error Response Format
@@ -219,6 +221,73 @@ All errors follow a consistent JSON structure:
   </Accordion>
 </AccordionGroup>
 
+### Authorization Errors
+
+<AccordionGroup>
+  <Accordion title="Forbidden - client access denied">
+    **HTTP Status:** `403 Forbidden`
+
+    **Cause:** You're trying to access or use a `contact_id` that doesn't belong to your venue or venue group.
+
+    **Solution:**
+    - Ensure the `contact_id` belongs to your venue
+    - Use the correct venue API key
+    - Create a new contact instead of referencing an existing one
+
+    **Example:**
+    ```json
+    {
+      "message": "This client does not belong to your venue"
+    }
+    ```
+
+    <Tip>
+      If you need to link to an existing contact, make sure the contact was created under your venue or is part of your venue group.
+    </Tip>
+  </Accordion>
+</AccordionGroup>
+
+### Rate Limiting Errors
+
+<AccordionGroup>
+  <Accordion title="Rate limit exceeded">
+    **HTTP Status:** `429 Too Many Requests`
+
+    **Cause:** You've exceeded the rate limit for the endpoint (e.g., 10 requests/minute for `/events/create` or 60 requests/minute for GET endpoints).
+
+    **Response Headers:**
+    ```http
+    X-RateLimit-Limit: 10
+    X-RateLimit-Remaining: 0
+    X-RateLimit-Reset: 1700234567
+    Retry-After: 45
+    ```
+
+    **Response Body:**
+    ```json
+    {
+      "message": "Rate limit exceeded",
+      "data": {
+        "limit": 10,
+        "window": "60 seconds",
+        "remaining": 0,
+        "resetAt": "2025-11-17T14:30:00.000Z",
+        "retryAfter": 45
+      }
+    }
+    ```
+
+    **Solution:**
+    1. Wait for the duration specified in the `Retry-After` header (in seconds)
+    2. Implement exponential backoff for retries
+    3. Monitor `X-RateLimit-Remaining` header to avoid hitting limits
+    4. Cache GET endpoint responses (sources, spaces, status, fields)
+    5. Batch multiple bookings in a single `/events/create` request
+
+    **See also:** [Rate Limiting Guide](/api-reference/rate-limiting) for detailed information and code examples.
+  </Accordion>
+</AccordionGroup>
+
 ### Resource Validation Errors
 
 <AccordionGroup>
@@ -257,6 +326,103 @@ All errors follow a consistent JSON structure:
     ```
 
     2. Use a valid source identifier from the response.
+  </Accordion>
+</AccordionGroup>
+
+### Product Validation Errors
+
+When including products to create draft quotations, these validation errors may occur:
+
+<AccordionGroup>
+  <Accordion title="missing products title">
+    **HTTP Status:** `400 Bad Request`
+
+    **Cause:** A product in the `products` array is missing the required `title` field.
+
+    **Solution:** Ensure every product has a `title`:
+    ```json
+    {
+      "products": [
+        {
+          "title": "Conference Room Package",
+          "quantity": 1,
+          "price_without_tax": 50000,
+          "vat": 2000
+        }
+      ]
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="missing products quantity">
+    **HTTP Status:** `400 Bad Request`
+
+    **Cause:** A product is missing the `quantity` field.
+
+    **Solution:** Include a positive integer quantity for each product:
+    ```json
+    {
+      "quantity": 2
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="missing products price_without_tax">
+    **HTTP Status:** `400 Bad Request`
+
+    **Cause:** A product is missing the `price_without_tax` field.
+
+    **Solution:** Include the price in **cents/centimes** (not euros/dollars):
+    ```json
+    {
+      "price_without_tax": 15000  // €150.00 = 15000 cents
+    }
+    ```
+
+    <Warning>
+      **Important:** Prices must be in **cents**, not euros/dollars.
+      - €100.00 = `10000` cents
+      - €35.50 = `3550` cents
+    </Warning>
+  </Accordion>
+
+  <Accordion title="missing products vat">
+    **HTTP Status:** `400 Bad Request`
+
+    **Cause:** A product is missing the `vat` (VAT rate) field.
+
+    **Solution:** Include the VAT rate in **basis points** (not percentage):
+    ```json
+    {
+      "vat": 2000  // 20% VAT = 2000 basis points
+    }
+    ```
+
+    <Warning>
+      **Important:** VAT must be in **basis points** (1/100th of a percent), not percentages.
+      - 20% = `2000` basis points
+      - 10% = `1000` basis points
+      - 5.5% = `550` basis points
+      - Valid range: `0` to `10000` (0% to 100%)
+    </Warning>
+  </Accordion>
+
+  <Accordion title="Invalid VAT rate">
+    **HTTP Status:** `400 Bad Request`
+
+    **Cause:** The VAT value is outside the valid range (0-10000 basis points).
+
+    **Solution:** Ensure VAT is between 0 and 10000:
+    ```json
+    {
+      "vat": 2000  // ✅ Valid: 20%
+    }
+    ```
+
+    **Common mistakes:**
+    - Using `20` instead of `2000` for 20% VAT ❌
+    - Using negative values ❌
+    - Using values over 10000 ❌
   </Accordion>
 </AccordionGroup>
 
@@ -374,10 +540,18 @@ async function apiRequestWithRetry(url, options, maxRetries = 3) {
         return await response.json();
       }
 
-      // Don't retry on 400 errors (client errors)
-      if (response.status === 400) {
+      // Don't retry on 400/403 errors (client errors)
+      if (response.status === 400 || response.status === 403) {
         const error = await response.json();
         throw new Error(error.message);
+      }
+
+      // Handle rate limiting with Retry-After header
+      if (response.status === 429) {
+        const retryAfter = parseInt(response.headers.get('Retry-After')) || 60;
+        console.warn(`Rate limited. Waiting ${retryAfter} seconds...`);
+        await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
+        continue;
       }
 
       // Retry on 500 errors
