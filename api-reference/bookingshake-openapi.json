@@ -164,6 +164,47 @@
                     },
                     "source_slug": "direct"
                   }
+                },
+                "event-with-custom-fields": {
+                  "summary": "Event with custom fields",
+                  "description": "Create an event with custom field values for booking, contact, and company. Field codes follow the format 'custom_XXXXXXXXXXX' and can be found via GET /fields.",
+                  "value": {
+                    "bookings": [
+                      {
+                        "date": "15-06-2025",
+                        "startTime": "18:00",
+                        "endTime": "23:00",
+                        "pax": "150",
+                        "event_type": "Gala Dinner",
+                        "custom_fields": {
+                          "custom_a1b2c3d4e5": "20000-50000",
+                          "custom_f6g7h8i9j0": "Black Tie"
+                        }
+                      }
+                    ],
+                    "contact": {
+                      "first_name": "Marie",
+                      "last_name": "Dupont",
+                      "email": "marie.dupont@example.com",
+                      "phone": "+33612345678",
+                      "custom_fields": {
+                        "custom_k1l2m3n4o5": "fr",
+                        "custom_p6q7r8s9t0": "referral"
+                      }
+                    },
+                    "company": {
+                      "name": "Luxury Events SA",
+                      "address_line_1": "10 Avenue des Champs-Élysées",
+                      "postal_code": "75008",
+                      "city": "Paris",
+                      "country": "France",
+                      "custom_fields": {
+                        "custom_u1v2w3x4y5": "100-500",
+                        "custom_z6a7b8c9d0": "premium"
+                      }
+                    },
+                    "source_slug": "website"
+                  }
                 }
               }
             }
@@ -365,6 +406,18 @@
                     "summary": "Missing product VAT",
                     "value": {
                       "message": "missing products vat"
+                    }
+                  },
+                  "missing-required-custom-field": {
+                    "summary": "Missing required custom field",
+                    "value": {
+                      "message": "missing required custom field \"Budget Range\" for contact"
+                    }
+                  },
+                  "unknown-custom-field": {
+                    "summary": "Unknown custom field code",
+                    "value": {
+                      "message": "unknown custom field \"custom_invalid123\" for booking[0]"
                     }
                   }
                 }
@@ -949,6 +1002,17 @@
             "items": {
               "$ref": "#/components/schemas/Product"
             }
+          },
+          "custom_fields": {
+            "type": "object",
+            "description": "Custom field values for the booking. Keys are field codes (from GET /fields where collection='reservations'), values are the field values. Field codes follow the format 'custom_XXXXXXXXXXX'. Required custom fields (isRequiredInBO=true) must be provided.",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "example": {
+              "custom_a1b2c3d4e5": "10000-20000",
+              "custom_f6g7h8i9j0": "Corporate"
+            }
           }
         }
       },
@@ -1032,6 +1096,17 @@
             "type": "string",
             "description": "Contact's country",
             "example": "France"
+          },
+          "custom_fields": {
+            "type": "object",
+            "description": "Custom field values for the contact. Keys are field codes (from GET /fields where collection='clients'), values are the field values. Field codes follow the format 'custom_XXXXXXXXXXX'. Required custom fields (isRequiredInBO=true) must be provided. Only used when creating a new contact (ignored if contact_id is provided).",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "example": {
+              "custom_k1l2m3n4o5": "fr",
+              "custom_p6q7r8s9t0": "gold"
+            }
           }
         }
       },
@@ -1128,6 +1203,17 @@
             "type": "string",
             "description": "Billing country",
             "example": "France"
+          },
+          "custom_fields": {
+            "type": "object",
+            "description": "Custom field values for the company. Keys are field codes (from GET /fields where collection='accounts'), values are the field values. Field codes follow the format 'custom_XXXXXXXXXXX'. Required custom fields (isRequiredInBO=true) must be provided.",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "example": {
+              "custom_u1v2w3x4y5": "50-100",
+              "custom_z6a7b8c9d0": "IT-001"
+            }
           }
         }
       },
