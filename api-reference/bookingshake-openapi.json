@@ -857,7 +857,7 @@
                   {
                     "value": "field_firstname",
                     "type": "text",
-                    "collection": "contacts",
+                    "collection": "clients",
                     "code": "firstname",
                     "label": "First Name",
                     "isRequiredInBO": true,
@@ -866,11 +866,29 @@
                   {
                     "value": "field_email",
                     "type": "email",
-                    "collection": "contacts",
+                    "collection": "clients",
                     "code": "email",
                     "label": "Email",
                     "isRequiredInBO": true,
                     "isCustom": false
+                  },
+                  {
+                    "value": "Abc123XyZ789",
+                    "type": "input",
+                    "collection": "clients",
+                    "code": "custom_a1b2c3d4e5",
+                    "label": "Preferred Language",
+                    "isRequiredInBO": false,
+                    "isCustom": true
+                  },
+                  {
+                    "value": "Def456UvW012",
+                    "type": "input",
+                    "collection": "reservations",
+                    "code": "custom_f6g7h8i9j0",
+                    "label": "Budget Range",
+                    "isRequiredInBO": true,
+                    "isCustom": true
                   }
                 ]
               }
@@ -1005,7 +1023,7 @@
           },
           "custom_fields": {
             "type": "object",
-            "description": "Custom field values for the booking. Keys are field codes (from GET /fields where collection='reservations'), values are the field values. Field codes follow the format 'custom_XXXXXXXXXXX'. Required custom fields (isRequiredInBO=true) must be provided.",
+            "description": "Custom field values for the booking. Keys are field codes (format: 'custom_XXXXXXXXXXX') retrieved from GET /fields. Required custom fields (isRequiredInBO=true) must be provided.",
             "additionalProperties": {
               "type": "string"
             },
@@ -1099,7 +1117,7 @@
           },
           "custom_fields": {
             "type": "object",
-            "description": "Custom field values for the contact. Keys are field codes (from GET /fields where collection='clients'), values are the field values. Field codes follow the format 'custom_XXXXXXXXXXX'. Required custom fields (isRequiredInBO=true) must be provided. Only used when creating a new contact (ignored if contact_id is provided).",
+            "description": "Custom field values for the contact. Keys are field codes (format: 'custom_XXXXXXXXXXX') retrieved from GET /fields. Required custom fields (isRequiredInBO=true) must be provided. Only used when creating a new contact (ignored if contact_id is provided).",
             "additionalProperties": {
               "type": "string"
             },
@@ -1206,7 +1224,7 @@
           },
           "custom_fields": {
             "type": "object",
-            "description": "Custom field values for the company. Keys are field codes (from GET /fields where collection='accounts'), values are the field values. Field codes follow the format 'custom_XXXXXXXXXXX'. Required custom fields (isRequiredInBO=true) must be provided.",
+            "description": "Custom field values for the company. Keys are field codes (format: 'custom_XXXXXXXXXXX') retrieved from GET /fields. Required custom fields (isRequiredInBO=true) must be provided.",
             "additionalProperties": {
               "type": "string"
             },
@@ -1298,7 +1316,7 @@
           "value": {
             "type": "string",
             "description": "Unique field identifier",
-            "example": "custom_field_abc123"
+            "example": "Abc123XyZ789"
           },
           "type": {
             "type": "string",
@@ -1307,13 +1325,14 @@
           },
           "collection": {
             "type": "string",
-            "description": "Database collection the field belongs to",
-            "example": "reservations"
+            "description": "Indicates where the field should be used: 'clients' (contact.custom_fields), 'accounts' (company.custom_fields), or 'reservations' (booking.custom_fields)",
+            "example": "clients",
+            "enum": ["clients", "accounts", "reservations"]
           },
           "code": {
             "type": "string",
-            "description": "Field code/identifier",
-            "example": "event_type"
+            "description": "Field code/identifier. For custom fields, follows the format 'custom_XXXXXXXXXXX'",
+            "example": "custom_a1b2c3d4e5"
           },
           "label": {
             "type": "string",

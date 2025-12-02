@@ -472,7 +472,10 @@ Create events with custom field values for contacts, companies, and bookings.
 **Scenario:** Your venue has configured custom fields to capture additional information like budget range, event theme, and company size. You need to pass these values when creating events.
 
 <Note>
-**Finding your custom fields:** Use the `GET /fields` endpoint to retrieve all available custom fields for your venue. Custom fields have `isCustom: true` and are identified by their `code` property (format: `custom_XXXXXXXXXXX`). The `collection` property indicates whether the field applies to `clients`, `accounts`, or `reservations`.
+**Finding your custom fields:** Use the `GET /fields` endpoint to retrieve all available custom fields for your venue. Custom fields have `isCustom: true` and are identified by their `code` property (format: `custom_XXXXXXXXXXX`). The `collection` property indicates where to use the field:
+- `clients` → use in `contact.custom_fields`
+- `accounts` → use in `company.custom_fields`
+- `reservations` → use in each `booking.custom_fields`
 </Note>
 
 <CodeGroup>
