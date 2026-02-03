@@ -30,6 +30,7 @@ curl -X POST 'https://api.bookingshake.io/api/events/create' \
       }
     ],
     "contact": {
+      "title": "Ms",
       "first_name": "Sarah",
       "last_name": "Miller",
       "email": "sarah.miller@email.com",
@@ -54,6 +55,7 @@ const createSimpleEvent = async (formData) => {
         event_type: formData.eventType
       }],
       contact: {
+        title: formData.title,
         firstname: formData.firstname,
         lastname: formData.lastname,
         email: formData.email,
@@ -110,6 +112,7 @@ curl -X POST 'https://api.bookingshake.io/api/events/create' \
       }
     ],
     "contact": {
+      "title": "Mr",
       "first_name": "Michael",
       "last_name": "Brown",
       "email": "michael.brown@company.com",
@@ -234,6 +237,7 @@ curl -X POST 'https://api.bookingshake.io/api/events/create' \
       }
     ],
     "contact": {
+      "title": "Ms",
       "first_name": "Jennifer",
       "last_name": "Davis",
       "email": "j.davis@techcorp.com",
@@ -379,6 +383,7 @@ const BookingFormHandler = {
           event_type: formData.eventType
         }],
         contact: {
+          title: formData.title,
           firstname: formData.firstname,
           lastname: formData.lastname,
           email: formData.email,
@@ -499,6 +504,7 @@ curl -X POST 'https://api.bookingshake.io/api/events/create' \
       }
     ],
     "contact": {
+      "title": "Mme",
       "first_name": "Marie",
       "last_name": "Dupont",
       "email": "marie.dupont@example.com",
@@ -541,6 +547,7 @@ const createEventWithCustomFields = async (eventData, customFields) => {
         custom_fields: customFields.booking // e.g., { custom_a1b2c3d4e5: "20000-50000" }
       }],
       contact: {
+        title: eventData.contact.title,
         first_name: eventData.contact.firstName,
         last_name: eventData.contact.lastName,
         email: eventData.contact.email,
@@ -666,7 +673,7 @@ class BookingShakeAPI {
 
     if (!bookingData.contact.contact_id) {
       if (!bookingData.contact.firstname || !bookingData.contact.lastname || !bookingData.contact.email) {
-        throw new Error('Contact must have firstname, lastname, and email');
+        throw new Error('Contact must have firstname, lastname, and email (title is optional)');
       }
     }
 
@@ -698,6 +705,7 @@ async function processBooking(formData) {
         event_type: formData.eventType
       }],
       contact: {
+        title: formData.title,
         firstname: formData.firstname,
         lastname: formData.lastname,
         email: formData.email,

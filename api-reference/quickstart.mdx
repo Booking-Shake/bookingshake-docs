@@ -162,6 +162,7 @@ curl -X POST 'https://api.bookingshake.io/api/events/create' \
       }
     ],
     "contact": {
+      "title": "Mr",
       "first_name": "John",
       "last_name": "Doe",
       "email": "john.doe@example.com",
@@ -189,6 +190,7 @@ const response = await fetch('https://api.bookingshake.io/api/events/create', {
       }
     ],
     contact: {
+      title: 'Mr',
       firstname: 'John',
       lastname: 'Doe',
       email: 'john.doe@example.com',
@@ -217,6 +219,7 @@ payload = {
         }
     ],
     "contact": {
+        "title": "Mr",
         "first_name": "John",
         "last_name": "Doe",
         "email": "john.doe@example.com",
@@ -252,6 +255,7 @@ $payload = json_encode([
         ]
     ],
     'contact' => [
+        'title' => 'Mr',
         'firstname' => 'John',
         'lastname' => 'Doe',
         'email' => 'john.doe@example.com',
