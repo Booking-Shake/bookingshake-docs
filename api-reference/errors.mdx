@@ -129,7 +129,7 @@ All errors follow a consistent JSON structure:
       "bookings": [
         {
           "date": "15-03-2025",
-          "startTime": "14:00",
+          "start_time": "14:00",
           "pax": "50"
         }
       ],
@@ -165,7 +165,7 @@ All errors follow a consistent JSON structure:
     ```json
     {
       "date": "15-03-2025",
-      "startTime": "14:00",
+      "start_time": "14:00",
       "pax": "50"
     }
     ```
@@ -193,7 +193,7 @@ All errors follow a consistent JSON structure:
     ```
   </Accordion>
 
-  <Accordion title="startTime format must be HH:mm">
+  <Accordion title="start_time format must be HH:mm">
     **HTTP Status:** `400 Bad Request`
 
     **Cause:** The time is not in the correct HH:mm format (24-hour).
@@ -206,18 +206,18 @@ All errors follow a consistent JSON structure:
 
     ```json
     {
-      "startTime": "14:00",
-      "endTime": "18:00"
+      "start_time": "14:00",
+      "end_time": "18:00"
     }
     ```
   </Accordion>
 
-  <Accordion title="endTime format must be HH:mm">
+  <Accordion title="end_time format must be HH:mm">
     **HTTP Status:** `400 Bad Request`
 
     **Cause:** The end time is not in the correct HH:mm format.
 
-    **Solution:** Same as `startTime` - use HH:mm format (24-hour).
+    **Solution:** Same as `start_time` - use HH:mm format (24-hour).
   </Accordion>
 </AccordionGroup>
 
@@ -513,7 +513,7 @@ function validateBookingData(booking) {
 
   // Validate time format (HH:mm)
   const timeRegex = /^\d{2}:\d{2}$/;
-  if (!timeRegex.test(booking.startTime)) {
+  if (!timeRegex.test(booking.start_time)) {
     throw new Error('Invalid time format. Use HH:mm');
   }
 

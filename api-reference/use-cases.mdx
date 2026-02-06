@@ -24,7 +24,7 @@ curl -X POST 'https://api.bookingshake.io/api/events/create' \
     "bookings": [
       {
         "date": "20-06-2025",
-        "startTime": "18:00",
+        "start_time": "18:00",
         "pax": "25",
         "event_type": "Birthday Party"
       }
@@ -50,16 +50,16 @@ const createSimpleEvent = async (formData) => {
     body: JSON.stringify({
       bookings: [{
         date: formData.date,
-        startTime: formData.time,
+        start_time: formData.time,
         pax: formData.guestCount,
         event_type: formData.eventType
       }],
       contact: {
         title: formData.title,
-        firstname: formData.firstname,
-        lastname: formData.lastname,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
         email: formData.email,
-        phone_number: formData.phone
+        phone: formData.phone
       }
     })
   });
@@ -88,24 +88,24 @@ curl -X POST 'https://api.bookingshake.io/api/events/create' \
     "bookings": [
       {
         "date": "10-04-2025",
-        "startTime": "09:00",
-        "endTime": "17:00",
+        "start_time": "09:00",
+        "end_time": "17:00",
         "pax": "40",
         "space_id": "space_training_room",
         "event_type": "Training Session - Day 1"
       },
       {
         "date": "11-04-2025",
-        "startTime": "09:00",
-        "endTime": "17:00",
+        "start_time": "09:00",
+        "end_time": "17:00",
         "pax": "40",
         "space_id": "space_training_room",
         "event_type": "Training Session - Day 2"
       },
       {
         "date": "12-04-2025",
-        "startTime": "09:00",
-        "endTime": "17:00",
+        "start_time": "09:00",
+        "end_time": "17:00",
         "pax": "40",
         "space_id": "space_training_room",
         "event_type": "Training Session - Day 3"
@@ -133,8 +133,8 @@ const createMultiDayEvent = async (startDate, numDays, details) => {
 
     bookings.push({
       date: formatDate(eventDate), // DD-MM-YYYY
-      startTime: details.startTime,
-      endTime: details.endTime,
+      start_time: details.startTime,
+      end_time: details.endTime,
       pax: details.pax,
       space_id: details.spaceId,
       event_type: `${details.eventType} - Day ${i + 1}`
@@ -202,8 +202,8 @@ curl -X POST 'https://api.bookingshake.io/api/events/create' \
     "bookings": [
       {
         "date": "15-05-2025",
-        "startTime": "10:00",
-        "endTime": "16:00",
+        "start_time": "10:00",
+        "end_time": "16:00",
         "pax": "80",
         "space_id": "space_grand_ballroom",
         "event_type": "Corporate Conference",
@@ -261,8 +261,8 @@ const createEventWithDraftQuotation = async (eventData) => {
   const payload = {
     bookings: [{
       date: eventData.date,
-      startTime: eventData.startTime,
-      endTime: eventData.endTime,
+      start_time: eventData.startTime,
+      end_time: eventData.endTime,
       pax: String(eventData.guestCount),
       space_id: eventData.spaceId,
       event_type: eventData.eventType,
@@ -376,18 +376,18 @@ const BookingFormHandler = {
       body: JSON.stringify({
         bookings: [{
           date: formData.date,
-          startTime: formData.startTime,
-          endTime: formData.endTime,
+          start_time: formData.startTime,
+          end_time: formData.endTime,
           pax: formData.pax,
           space_id: formData.spaceId,
           event_type: formData.eventType
         }],
         contact: {
           title: formData.title,
-          firstname: formData.firstname,
-          lastname: formData.lastname,
+          first_name: formData.firstName,
+          last_name: formData.lastName,
           email: formData.email,
-          phone_number: formData.phone
+          phone: formData.phone
         },
         source_slug: formData.sourceSlug
       })
@@ -421,7 +421,7 @@ curl -X POST 'https://api.bookingshake.io/api/events/create' \
     "bookings": [
       {
         "date": "25-07-2025",
-        "startTime": "19:00",
+        "start_time": "19:00",
         "pax": "30",
         "event_type": "Anniversary Dinner"
       }
@@ -444,7 +444,7 @@ const createEventForExistingContact = async (contactId, eventData) => {
     body: JSON.stringify({
       bookings: [{
         date: eventData.date,
-        startTime: eventData.startTime,
+        start_time: eventData.startTime,
         pax: eventData.pax,
         event_type: eventData.eventType
       }],
@@ -461,7 +461,7 @@ const createEventForExistingContact = async (contactId, eventData) => {
 </CodeGroup>
 
 <Tip>
-When `contact_id` is provided, other contact fields (firstname, lastname, email) are ignored, and the existing contact is used.
+When `contact_id` is provided, other contact fields (first_name, last_name, email) are ignored, and the existing contact is used.
 </Tip>
 
 <Note>
@@ -493,8 +493,8 @@ curl -X POST 'https://api.bookingshake.io/api/events/create' \
     "bookings": [
       {
         "date": "15-06-2025",
-        "startTime": "18:00",
-        "endTime": "23:00",
+        "start_time": "18:00",
+        "end_time": "23:00",
         "pax": "150",
         "event_type": "Gala Dinner",
         "custom_fields": {
@@ -540,8 +540,8 @@ const createEventWithCustomFields = async (eventData, customFields) => {
     body: JSON.stringify({
       bookings: [{
         date: eventData.date,
-        startTime: eventData.startTime,
-        endTime: eventData.endTime,
+        start_time: eventData.startTime,
+        end_time: eventData.endTime,
         pax: eventData.pax,
         event_type: eventData.eventType,
         custom_fields: customFields.booking // e.g., { custom_a1b2c3d4e5: "20000-50000" }
@@ -658,9 +658,9 @@ class BookingShakeAPI {
     // Validate input
     bookingData.bookings.forEach(booking => {
       this.validateDate(booking.date);
-      this.validateTime(booking.startTime);
-      if (booking.endTime) {
-        this.validateTime(booking.endTime);
+      this.validateTime(booking.start_time);
+      if (booking.end_time) {
+        this.validateTime(booking.end_time);
       }
       if (!booking.pax) {
         throw new Error('Number of guests (pax) is required');
@@ -672,8 +672,8 @@ class BookingShakeAPI {
     }
 
     if (!bookingData.contact.contact_id) {
-      if (!bookingData.contact.firstname || !bookingData.contact.lastname || !bookingData.contact.email) {
-        throw new Error('Contact must have firstname, lastname, and email (title is optional)');
+      if (!bookingData.contact.first_name || !bookingData.contact.last_name || !bookingData.contact.email) {
+        throw new Error('Contact must have first_name, last_name, and email (title is optional)');
       }
     }
 
@@ -698,18 +698,18 @@ async function processBooking(formData) {
     const result = await api.createEvent({
       bookings: [{
         date: formData.date,
-        startTime: formData.startTime,
-        endTime: formData.endTime,
+        start_time: formData.startTime,
+        end_time: formData.endTime,
         pax: formData.guestCount,
         space_id: formData.selectedSpace,
         event_type: formData.eventType
       }],
       contact: {
         title: formData.title,
-        firstname: formData.firstname,
-        lastname: formData.lastname,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
         email: formData.email,
-        phone_number: formData.phone
+        phone: formData.phone
       },
       source_slug: 'website'
     });

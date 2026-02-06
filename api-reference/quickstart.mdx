@@ -155,8 +155,8 @@ curl -X POST 'https://api.bookingshake.io/api/events/create' \
     "bookings": [
       {
         "date": "15-03-2025",
-        "startTime": "14:00",
-        "endTime": "18:00",
+        "start_time": "14:00",
+        "end_time": "18:00",
         "pax": "50",
         "event_type": "Corporate Event"
       }
@@ -183,18 +183,18 @@ const response = await fetch('https://api.bookingshake.io/api/events/create', {
     bookings: [
       {
         date: '15-03-2025',
-        startTime: '14:00',
-        endTime: '18:00',
+        start_time: '14:00',
+        end_time: '18:00',
         pax: '50',
         event_type: 'Corporate Event'
       }
     ],
     contact: {
       title: 'Mr',
-      firstname: 'John',
-      lastname: 'Doe',
+      first_name: 'John',
+      last_name: 'Doe',
       email: 'john.doe@example.com',
-      phone_number: '+33123456789'
+      phone: '+33123456789'
     },
     source_slug: 'website'
   })
@@ -212,8 +212,8 @@ payload = {
     "bookings": [
         {
             "date": "15-03-2025",
-            "startTime": "14:00",
-            "endTime": "18:00",
+            "start_time": "14:00",
+            "end_time": "18:00",
             "pax": "50",
             "event_type": "Corporate Event"
         }
@@ -248,18 +248,18 @@ $payload = json_encode([
     'bookings' => [
         [
             'date' => '15-03-2025',
-            'startTime' => '14:00',
-            'endTime' => '18:00',
+            'start_time' => '14:00',
+            'end_time' => '18:00',
             'pax' => '50',
             'event_type' => 'Corporate Event'
         ]
     ],
     'contact' => [
         'title' => 'Mr',
-        'firstname' => 'John',
-        'lastname' => 'Doe',
+        'first_name' => 'John',
+        'last_name' => 'Doe',
         'email' => 'john.doe@example.com',
-        'phone_number' => '+33123456789'
+        'phone' => '+33123456789'
     ],
     'source_slug' => 'website'
 ]);

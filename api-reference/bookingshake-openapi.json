@@ -62,8 +62,8 @@
                     "bookings": [
                       {
                         "date": "15-03-2025",
-                        "startTime": "14:00",
-                        "endTime": "18:00",
+                        "start_time": "14:00",
+                        "end_time": "18:00",
                         "pax": "50",
                         "event_type": "Corporate Event",
                         "comments": "Setup needed at 13:00"
@@ -85,16 +85,16 @@
                     "bookings": [
                       {
                         "date": "15-03-2025",
-                        "startTime": "09:00",
-                        "endTime": "12:00",
+                        "start_time": "09:00",
+                        "end_time": "12:00",
                         "pax": "30",
                         "space_id": "space_abc123",
                         "event_type": "Workshop"
                       },
                       {
                         "date": "15-03-2025",
-                        "startTime": "14:00",
-                        "endTime": "17:00",
+                        "start_time": "14:00",
+                        "end_time": "17:00",
                         "pax": "30",
                         "space_id": "space_abc123",
                         "event_type": "Workshop"
@@ -121,8 +121,8 @@
                     "bookings": [
                       {
                         "date": "20-04-2025",
-                        "startTime": "10:00",
-                        "endTime": "16:00",
+                        "start_time": "10:00",
+                        "end_time": "16:00",
                         "pax": "100",
                         "event_type": "Conference",
                         "products": [
@@ -172,8 +172,8 @@
                     "bookings": [
                       {
                         "date": "15-06-2025",
-                        "startTime": "18:00",
-                        "endTime": "23:00",
+                        "start_time": "18:00",
+                        "end_time": "23:00",
                         "pax": "150",
                         "event_type": "Gala Dinner",
                         "custom_fields": {
@@ -297,13 +297,13 @@
                   "invalid-time": {
                     "summary": "Invalid time format",
                     "value": {
-                      "message": "startTime format must be HH:mm"
+                      "message": "start_time format must be HH:mm"
                     }
                   },
                   "invalid-endtime": {
-                    "summary": "Invalid endTime format",
+                    "summary": "Invalid end_time format",
                     "value": {
-                      "message": "endTime format must be HH:mm"
+                      "message": "end_time format must be HH:mm"
                     }
                   },
                   "missing-pax": {
@@ -336,19 +336,19 @@
                       "message": "missing date"
                     }
                   },
-                  "missing-startTime": {
+                  "missing-start_time": {
                     "summary": "Missing start time in booking",
                     "value": {
-                      "message": "missing startTime"
+                      "message": "missing start_time"
                     }
                   },
-                  "missing-contact-firstname": {
+                  "missing-contact-first_name": {
                     "summary": "Missing contact first name",
                     "value": {
                       "message": "missing contact first_name"
                     }
                   },
-                  "missing-contact-lastname": {
+                  "missing-contact-last_name": {
                     "summary": "Missing contact last name",
                     "value": {
                       "message": "missing contact last_name"
@@ -974,7 +974,7 @@
       },
       "Booking": {
         "type": "object",
-        "required": ["date", "startTime", "pax"],
+        "required": ["date", "start_time", "pax"],
         "properties": {
           "date": {
             "type": "string",
@@ -982,13 +982,13 @@
             "example": "25-12-2024",
             "pattern": "^\\d{2}-\\d{2}-\\d{4}$"
           },
-          "startTime": {
+          "start_time": {
             "type": "string",
             "description": "Start time in HH:mm format (24-hour)",
             "example": "14:30",
             "pattern": "^\\d{2}:\\d{2}$"
           },
-          "endTime": {
+          "end_time": {
             "type": "string",
             "description": "End time in HH:mm format (24-hour). Optional.",
             "example": "18:00",
