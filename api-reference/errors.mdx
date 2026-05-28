@@ -138,6 +138,14 @@ All errors follow a consistent JSON structure:
     ```
   </Accordion>
 
+  <Accordion title="too many bookings - maximum 20 per request">
+    **HTTP Status:** `400 Bad Request`
+
+    **Cause:** The `bookings` array contains more than 20 entries.
+
+    **Solution:** Split your bookings into multiple requests of 20 or fewer. If you need to create more bookings, send them in successive calls (mind the `/events/create` rate limit of 10 requests/minute).
+  </Accordion>
+
   <Accordion title="missing contact">
     **HTTP Status:** `400 Bad Request`
 

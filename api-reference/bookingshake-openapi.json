@@ -282,6 +282,12 @@
                       "message": "missing bookings"
                     }
                   },
+                  "too-many-bookings": {
+                    "summary": "Too many bookings (max 20)",
+                    "value": {
+                      "message": "too many bookings - maximum 20 per request"
+                    }
+                  },
                   "missing-contact": {
                     "summary": "Missing contact information",
                     "value": {
@@ -1241,11 +1247,12 @@
         "properties": {
           "bookings": {
             "type": "array",
-            "description": "Array of one or more bookings to create. Multiple bookings will be grouped together.",
+            "description": "Array of one or more bookings to create (maximum 20 per request). Multiple bookings will be grouped together.",
             "items": {
               "$ref": "#/components/schemas/Booking"
             },
-            "minItems": 1
+            "minItems": 1,
+            "maxItems": 20
           },
           "contact": {
             "$ref": "#/components/schemas/Contact"
