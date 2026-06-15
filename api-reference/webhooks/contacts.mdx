@@ -1,0 +1,133 @@
+---
+title: "Contact Events"
+description: "Receive real-time notifications when contacts are created, updated, or deleted"
+icon: "user"
+---
+
+## Overview
+
+Contact events notify you of every change to contacts in BookingShake: `contact.created`, `contact.updated`, and `contact.deleted`. A contact represents a person, optionally attached to an [account](/api-reference/webhooks/accounts) through `account_id`.
+
+**Common use cases:**
+- Sync contacts to external CRM systems (Salesforce, HubSpot, etc.)
+- Trigger automated workflows when new contacts are created
+- Keep marketing opt-in statuses in sync with your emailing tools
+
+## Payload Examples
+
+### Contact Created
+
+Triggered when a new contact is added to your venue.
+
+```json
+{
+  "event": "contact.created",
+  "timestamp": 1731493800000,
+  "venue_id": "venue123",
+  "venues_group_id": "group456",
+  "data": {
+    "id": "contact-456",
+    "first_name": "John",
+    "last_name": "Doe",
+    "email": "john.doe@example.com",
+    "phone": "+33612345678",
+    "landline_phone": "+33145678901",
+    "title": "CEO",
+    "account_id": "account-123",
+    "optin_marketing": true,
+    "address_line_1": "10 rue Example",
+    "postal_code": "75001",
+    "city": "Paris",
+    "country": "France",
+    "created_at": 1731493800000
+  }
+}
+```
+
+### Contact Updated
+
+Triggered when contact information is modified. Contains all contact data after the update.
+
+```json
+{
+  "event": "contact.updated",
+  "timestamp": 1731493900000,
+  "venue_id": "venue123",
+  "venues_group_id": "group456",
+  "data": {
+    "id": "contact-456",
+    "first_name": "John",
+    "last_name": "Doe",
+    "email": "john.newemail@example.com",
+    "phone": "+33698765432",
+    "landline_phone": "+33145678901",
+    "title": "CEO",
+    "account_id": "account-123",
+    "optin_marketing": true,
+    "address_line_1": "10 rue Example",
+    "postal_code": "75001",
+    "city": "Paris",
+    "country": "France",
+    "created_at": 1731493800000
+  }
+}
+```
+
+`contact.updated` is only emitted when at least one field exposed in the payload (including custom fields) actually changes. Internal or technical changes do not emit events.
+
+### Contact Deleted
+
+Triggered when a contact is removed. Only includes the contact ID.
+
+```json
+{
+  "event": "contact.deleted",
+  "timestamp": 1731494000000,
+  "venue_id": "venue123",
+  "venues_group_id": "group456",
+  "data": {
+    "id": "contact-456"
+  }
+}
+```
+
+## Data Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique contact ID |
+| `first_name` | string | First name |
+| `last_name` | string | Last name |
+| `email` | string | Email address |
+| `phone` | string | Mobile phone number |
+| `landline_phone` | string | Landline phone number |
+| `title` | string | Contact's title |
+| `position` | string | Job position |
+| `avatar` | string | Avatar image URL |
+| `comments` | string | Free-text notes about the contact |
+| `account_id` | string | ID of the [account](/api-reference/webhooks/accounts) this contact belongs to |
+| `optin_marketing` | boolean | Marketing communications opt-in |
+| `optin_general` | boolean | General communications opt-in |
+| `address_line_1` | string | Address |
+| `address_line_2` | string | Address, line 2 |
+| `postal_code` | string | Postal code |
+| `city` | string | City |
+| `country` | string | Country, verbatim as entered |
+| `created_at` | number | Creation timestamp, Unix milliseconds |
+| `custom_<uuid>` | any | [Custom fields](/api-reference/webhooks/introduction#custom-fields) configured for your venue |
+
+<Note>
+  Fields without a value are **omitted** from contact and account payloads (no explicit `null`), so the exact set of keys varies per contact. This differs from [invoice](/api-reference/webhooks/invoices) and [payment](/api-reference/webhooks/payments) payloads, where every field is always present with an explicit `null`.
+</Note>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Account Events" icon="building" href="/api-reference/webhooks/accounts">
+    Track the companies your contacts belong to
+  </Card>
+
+  <Card title="Security & Verification" icon="shield-halved" href="/api-reference/webhooks/security">
+    Verify webhook signatures before processing
+  </Card>
+</CardGroup>

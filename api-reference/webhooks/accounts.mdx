@@ -1,0 +1,138 @@
+---
+title: "Account Events"
+description: "Receive real-time notifications when accounts (companies) are created, updated, or deleted"
+icon: "building"
+---
+
+## Overview
+
+Account events notify you of every change to accounts in BookingShake: `account.created`, `account.updated`, and `account.deleted`. An account represents a company attached to your venue.
+
+**Common use cases:**
+- Sync companies to external CRM systems (Salesforce, HubSpot, etc.)
+- Keep billing information up to date in your invoicing tools
+- Maintain data consistency across multiple platforms
+
+## Payload Examples
+
+### Account Created
+
+Triggered when a new account (company) is added to your venue.
+
+```json
+{
+  "event": "account.created",
+  "timestamp": 1731495000000,
+  "venue_id": "venue123",
+  "venues_group_id": "group456",
+  "data": {
+    "id": "account-123",
+    "name": "Acme Corp",
+    "legal_name": "ACME CORPORATION SAS",
+    "company_type": "SAS",
+    "company_registration_id": "123456789",
+    "vat_number": "FR12345678901",
+    "address_line_1": "123 rue Example",
+    "address_line_2": "Batiment A",
+    "postal_code": "75001",
+    "city": "Paris",
+    "country": "France",
+    "billing_address_line_1": "123 rue Example",
+    "billing_postal_code": "75001",
+    "billing_city": "Paris",
+    "billing_country": "France",
+    "created_at": 1731495000000
+  }
+}
+```
+
+### Account Updated
+
+Triggered when account information is modified. Contains all account data after the update.
+
+```json
+{
+  "event": "account.updated",
+  "timestamp": 1731495100000,
+  "venue_id": "venue123",
+  "venues_group_id": "group456",
+  "data": {
+    "id": "account-123",
+    "name": "Acme Corporation",
+    "legal_name": "ACME CORPORATION SAS",
+    "company_type": "SAS",
+    "company_registration_id": "123456789",
+    "vat_number": "FR98765432101",
+    "address_line_1": "123 rue Example",
+    "address_line_2": "Batiment A",
+    "postal_code": "75001",
+    "city": "Paris",
+    "country": "France",
+    "billing_address_line_1": "123 rue Example",
+    "billing_postal_code": "75001",
+    "billing_city": "Paris",
+    "billing_country": "France",
+    "created_at": 1731495000000
+  }
+}
+```
+
+`account.updated` is only emitted when at least one field exposed in the payload (including custom fields) actually changes. Internal or technical changes do not emit events.
+
+### Account Deleted
+
+Triggered when an account is removed. Only includes the account ID.
+
+```json
+{
+  "event": "account.deleted",
+  "timestamp": 1731495200000,
+  "venue_id": "venue123",
+  "venues_group_id": "group456",
+  "data": {
+    "id": "account-123"
+  }
+}
+```
+
+## Data Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique account ID |
+| `name` | string | Company display name |
+| `legal_name` | string | Registered legal name |
+| `company_type` | string | Legal form (e.g., `SAS`, `SARL`) |
+| `company_registration_id` | string | Company registration number (SIREN in France) |
+| `siret` | string | SIRET number (France) |
+| `vat_number` | string | VAT number |
+| `rcs_number` | string | Trade register number (RCS) |
+| `sector` | string | Business sector |
+| `address_line_1` | string | Main address |
+| `address_line_2` | string | Main address, line 2 |
+| `postal_code` | string | Main address postal code |
+| `city` | string | Main address city |
+| `country` | string | Main address country, verbatim as entered |
+| `billing_address_line_1` | string | Billing address |
+| `billing_address_line_2` | string | Billing address, line 2 |
+| `billing_postal_code` | string | Billing address postal code |
+| `billing_city` | string | Billing address city |
+| `billing_country` | string | Billing address country, verbatim as entered |
+| `created_at` | number | Creation timestamp, Unix milliseconds |
+| `custom_<uuid>` | any | [Custom fields](/api-reference/webhooks/introduction#custom-fields) configured for your venue |
+
+<Note>
+  Fields without a value are **omitted** from account and contact payloads (no explicit `null`), so the exact set of keys varies per account. This differs from [invoice](/api-reference/webhooks/invoices) and [payment](/api-reference/webhooks/payments) payloads, where every field is always present with an explicit `null`.
+</Note>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Contact Events" icon="user" href="/api-reference/webhooks/contacts">
+    Track the people attached to your accounts
+  </Card>
+
+  <Card title="Security & Verification" icon="shield-halved" href="/api-reference/webhooks/security">
+    Verify webhook signatures before processing
+  </Card>
+</CardGroup>

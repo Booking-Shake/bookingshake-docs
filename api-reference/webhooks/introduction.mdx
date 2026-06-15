@@ -1,12 +1,12 @@
 ---
 title: "Webhooks"
-description: "Receive real-time notifications when accounts and contacts change in BookingShake"
+description: "Receive real-time notifications when accounts, contacts, invoices, and payments change in BookingShake"
 icon: "webhook"
 ---
 
 ## Overview
 
-Webhooks allow your application to receive real-time notifications when data changes in BookingShake. Instead of polling the API for updates, BookingShake automatically sends HTTP POST requests to your specified endpoint whenever an account or contact is created, updated, or deleted.
+Webhooks allow your application to receive real-time notifications when data changes in BookingShake. Instead of polling the API for updates, BookingShake automatically sends HTTP POST requests to your specified endpoint whenever an account, contact, or payment is created, updated, or deleted — or when an invoice is issued.
 
 **Why use webhooks?**
 - **Real-time updates**: Receive notifications instantly when data changes
@@ -16,6 +16,7 @@ Webhooks allow your application to receive real-time notifications when data cha
 
 **Common use cases:**
 - Sync contacts and accounts to external CRM systems (Salesforce, HubSpot, etc.)
+- Sync invoices and payments to your accounting software or ERP
 - Trigger automated workflows when new contacts are created
 - Update analytics dashboards in real-time
 - Maintain data consistency across multiple platforms
@@ -45,7 +46,7 @@ Webhooks allow your application to receive real-time notifications when data cha
 
 ## Available Events
 
-BookingShake supports six webhook events:
+BookingShake supports ten webhook events:
 
 | Event | Description | Triggered When |
 |-------|-------------|----------------|
@@ -55,6 +56,34 @@ BookingShake supports six webhook events:
 | `contact.created` | New contact created | A person is added to your venue |
 | `contact.updated` | Contact modified | Contact information is updated |
 | `contact.deleted` | Contact removed | A contact is deleted |
+| `invoice.created` <sup>Beta</sup> | Invoice issued | An invoice, deposit invoice, balance invoice, or credit note is generated |
+| `payment.created` <sup>Beta</sup> | New payment recorded | A payment is added to a booking |
+| `payment.updated` <sup>Beta</sup> | Payment modified | Payment information is updated (amount, status, dates...) |
+| `payment.deleted` <sup>Beta</sup> | Payment removed | A payment is deleted |
+
+<Note>
+  Invoice and payment events are currently in **beta**: their payload structure may still evolve before general availability.
+</Note>
+
+Each resource has a dedicated page with payload examples and field reference:
+
+<CardGroup cols={2}>
+  <Card title="Account Events" icon="building" href="/api-reference/webhooks/accounts">
+    Companies: created, updated, deleted
+  </Card>
+
+  <Card title="Contact Events" icon="user" href="/api-reference/webhooks/contacts">
+    People: created, updated, deleted
+  </Card>
+
+  <Card title="Invoice Events" icon="file-invoice" href="/api-reference/webhooks/invoices">
+    Full invoice payload: amounts, lines, frozen seller/buyer blocks, e-invoicing fields
+  </Card>
+
+  <Card title="Payment Events" icon="credit-card" href="/api-reference/webhooks/payments">
+    Lightweight payment payload with invoice and booking correlation keys
+  </Card>
+</CardGroup>
 
 <Note>
   You can subscribe to multiple events in a single webhook. Select only the events you need to reduce unnecessary traffic.
@@ -86,160 +115,6 @@ All webhooks follow this consistent structure:
 | `venues_group_id` | string \| null | The venues group ID if applicable |
 | `data` | object | Event-specific data containing the resource details |
 
-## Event Examples
-
-### Contact Created
-
-Triggered when a new contact is added to your venue.
-
-```json
-{
-  "event": "contact.created",
-  "timestamp": 1731493800000,
-  "venue_id": "venue123",
-  "venues_group_id": "group456",
-  "data": {
-    "id": "contact-456",
-    "first_name": "John",
-    "last_name": "Doe",
-    "email": "john.doe@example.com",
-    "phone": "+33612345678",
-    "landline_phone": "+33145678901",
-    "title": "CEO",
-    "account_id": "account-123",
-    "optin_marketing": true,
-    "address_line_1": "10 rue Example",
-    "postal_code": "75001",
-    "city": "Paris",
-    "country": "France",
-    "created_at": 1731493800000
-  }
-}
-```
-
-### Contact Updated
-
-Triggered when contact information is modified. Contains all contact data after the update.
-
-```json
-{
-  "event": "contact.updated",
-  "timestamp": 1731493900000,
-  "venue_id": "venue123",
-  "venues_group_id": "group456",
-  "data": {
-    "id": "contact-456",
-    "first_name": "John",
-    "last_name": "Doe",
-    "email": "john.newemail@example.com",
-    "phone": "+33698765432",
-    "landline_phone": "+33145678901",
-    "title": "CEO",
-    "account_id": "account-123",
-    "optin_marketing": true,
-    "address_line_1": "10 rue Example",
-    "postal_code": "75001",
-    "city": "Paris",
-    "country": "France",
-    "created_at": 1731493800000
-  }
-}
-```
-
-### Contact Deleted
-
-Triggered when a contact is removed. Only includes the contact ID.
-
-```json
-{
-  "event": "contact.deleted",
-  "timestamp": 1731494000000,
-  "venue_id": "venue123",
-  "venues_group_id": "group456",
-  "data": {
-    "id": "contact-456"
-  }
-}
-```
-
-### Account Created
-
-Triggered when a new account (company) is added to your venue.
-
-```json
-{
-  "event": "account.created",
-  "timestamp": 1731495000000,
-  "venue_id": "venue123",
-  "venues_group_id": "group456",
-  "data": {
-    "id": "account-123",
-    "name": "Acme Corp",
-    "legal_name": "ACME CORPORATION SAS",
-    "company_type": "SAS",
-    "company_registration_id": "123456789",
-    "vat_number": "FR12345678901",
-    "address_line_1": "123 rue Example",
-    "address_line_2": "Batiment A",
-    "postal_code": "75001",
-    "city": "Paris",
-    "country": "France",
-    "billing_address_line_1": "123 rue Example",
-    "billing_postal_code": "75001",
-    "billing_city": "Paris",
-    "billing_country": "France",
-    "created_at": 1731495000000
-  }
-}
-```
-
-### Account Updated
-
-Triggered when account information is modified. Contains all account data after the update.
-
-```json
-{
-  "event": "account.updated",
-  "timestamp": 1731495100000,
-  "venue_id": "venue123",
-  "venues_group_id": "group456",
-  "data": {
-    "id": "account-123",
-    "name": "Acme Corporation",
-    "legal_name": "ACME CORPORATION SAS",
-    "company_type": "SAS",
-    "company_registration_id": "123456789",
-    "vat_number": "FR98765432101",
-    "address_line_1": "123 rue Example",
-    "address_line_2": "Batiment A",
-    "postal_code": "75001",
-    "city": "Paris",
-    "country": "France",
-    "billing_address_line_1": "123 rue Example",
-    "billing_postal_code": "75001",
-    "billing_city": "Paris",
-    "billing_country": "France",
-    "created_at": 1731495000000
-  }
-}
-```
-
-### Account Deleted
-
-Triggered when an account is removed. Only includes the account ID.
-
-```json
-{
-  "event": "account.deleted",
-  "timestamp": 1731495200000,
-  "venue_id": "venue123",
-  "venues_group_id": "group456",
-  "data": {
-    "id": "account-123"
-  }
-}
-```
-
 ## HTTP Headers
 
 Each webhook request includes these headers:
@@ -262,7 +137,7 @@ Idempotency-Key: <unique-uuid>
 
 ## Custom Fields
 
-Webhooks include custom fields configured for your venue. Custom fields are prefixed with `custom_` followed by a UUID:
+Account and contact webhooks include custom fields configured for your venue (invoice and payment payloads do not expose custom fields). Custom fields are prefixed with `custom_` followed by a UUID:
 
 ```json
 {

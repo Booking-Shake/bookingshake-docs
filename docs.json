@@ -26,6 +26,10 @@
 						"group": "Webhooks",
 						"pages": [
 							"api-reference/webhooks/introduction",
+							"api-reference/webhooks/accounts",
+							"api-reference/webhooks/contacts",
+							"api-reference/webhooks/invoices",
+							"api-reference/webhooks/payments",
 							"api-reference/webhooks/security"
 						]
 					},
