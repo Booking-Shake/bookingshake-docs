@@ -34,6 +34,13 @@
 						]
 					},
 					{
+						"group": "REST API",
+						"pages": [
+							"api-reference/invoices",
+							"api-reference/payments"
+						]
+					},
+					{
 						"group": "Guides",
 						"pages": [
 							"api-reference/errors",
@@ -64,6 +71,18 @@
 						"group": "Fields",
 						"pages": [
 							"GET /fields"
+						]
+					},
+					{
+						"group": "Invoices",
+						"pages": [
+							"GET /invoices/{id}"
+						]
+					},
+					{
+						"group": "Payments",
+						"pages": [
+							"GET /payments/{id}"
 						]
 					}
 				]
