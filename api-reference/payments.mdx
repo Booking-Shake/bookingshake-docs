@@ -10,7 +10,7 @@ icon: "credit-card"
 
 ## Overview
 
-`GET /payments/{id}` returns a single payment by its document ID. The response payload is **identical** to the `data` block of the [`payment.*`](/api-reference/webhooks/payments) webhooks — same fields, same conventions — so you can use it to back-fill a missed webhook or reconcile a payment on demand.
+`GET /payments/{id}` returns a single payment by its document ID — useful to back-fill a missed webhook or reconcile a payment on demand.
 
 <Note>
   **Security deposits (holds) are out of scope** and return `404`, consistent with the payment webhooks (which never emit for holds). Amounts are integer **cents**, dates are `YYYY-MM-DD` strings in the `Europe/Paris` timezone, timestamps are Unix **milliseconds**, and missing values are explicit `null`.
@@ -112,7 +112,7 @@ The payment is returned wrapped in the standard `{ message, data }` envelope.
 | `quote_id` | string \| null | ID of the linked quote |
 | `booking_id` | string \| null | Correlation key shared with [invoice](/api-reference/webhooks/invoices) and payment events of the same booking |
 
-See the [payment webhook documentation](/api-reference/webhooks/payments#data-fields) for the full field reference — the payloads are identical.
+See the [payment webhook documentation](/api-reference/webhooks/payments#data-fields) for the full field reference.
 
 ## Errors
 

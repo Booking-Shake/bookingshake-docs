@@ -943,7 +943,7 @@
     "/invoices/{id}": {
       "get": {
         "summary": "Get an invoice",
-        "description": "Retrieve a single invoice by its document ID. The response payload is identical to the `data` block of the [invoice.created](/api-reference/webhooks/invoices) webhook (same fields, same conventions: amounts in integer cents, dates as `YYYY-MM-DD` in `Europe/Paris`, frozen seller/account/contact snapshots).\n\nReturns invoices, deposit invoices, balance invoices and their credit notes. Quotes are not exposed by this endpoint and return `404`.",
+        "description": "Retrieve a single invoice by its document ID.\n\nReturns invoices, deposit invoices, balance invoices and their credit notes. Quotes are not exposed by this endpoint and return `404`.",
         "operationId": "getInvoice",
         "tags": ["Invoices"],
         "security": [{ "bearerAuth": [] }],
@@ -1145,7 +1145,7 @@
     "/payments/{id}": {
       "get": {
         "summary": "Get a payment",
-        "description": "Retrieve a single payment by its document ID. The response payload is identical to the `data` block of the [payment.*](/api-reference/webhooks/payments) webhooks (same fields, same conventions: amount in integer cents, dates as `YYYY-MM-DD` in `Europe/Paris`, `method` verbatim).\n\nSecurity deposits (holds) are out of scope and return `404`, consistent with the webhooks.",
+        "description": "Retrieve a single payment by its document ID.\n\nSecurity deposits (holds) are out of scope and return `404`, consistent with the webhooks.",
         "operationId": "getPayment",
         "tags": ["Payments"],
         "security": [{ "bearerAuth": [] }],

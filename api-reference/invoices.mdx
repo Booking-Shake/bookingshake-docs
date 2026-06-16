@@ -10,7 +10,7 @@ icon: "file-invoice"
 
 ## Overview
 
-`GET /invoices/{id}` returns a single invoice by its document ID. The response payload is **identical** to the `data` block of the [`invoice.created`](/api-reference/webhooks/invoices) webhook — same fields, same conventions — so you can use it to back-fill a missed webhook, reconcile your accounting, or re-fetch a document on demand.
+`GET /invoices/{id}` returns a single invoice by its document ID — useful to back-fill a missed webhook, reconcile your accounting, or re-fetch a document on demand.
 
 The endpoint returns standard invoices, deposit invoices, balance invoices, and their credit notes. **Quotes are not exposed** by this endpoint.
 
@@ -162,7 +162,7 @@ The invoice is returned wrapped in the standard `{ message, data }` envelope. Th
 | `seller` / `account` / `contact` | object \| null | Frozen legal-mention snapshots captured at issue time |
 | `pdf_url` | string \| null | URL of the generated PDF |
 
-For the complete field reference (amounts, lines, snapshot blocks), see the [invoice webhook documentation](/api-reference/webhooks/invoices#data-fields) — the payloads are identical.
+For the complete field reference (amounts, lines, snapshot blocks), see the [invoice webhook documentation](/api-reference/webhooks/invoices#data-fields).
 
 ## Errors
 
