@@ -1,0 +1,175 @@
+---
+title: "Products"
+description: "List your venue product catalog, or retrieve a single product"
+icon: "box"
+---
+
+## Overview
+
+The product endpoints expose your venue catalog (the products and services you sell):
+
+- `GET /products` — list the **whole catalog** of your venue (no pagination)
+- `GET /products/{id}` — retrieve a **single product** by its ID
+
+Soft-deleted products are never returned. A product is a **package** when its `package_products` array is non-empty.
+
+<Note>
+  Every field is always present with an explicit `null` when unset. Amounts are **verbatim**: `price`/`cost` are integer **cents**, `vat` is in **basis points** (200 = 2%). Timestamps are Unix **milliseconds**.
+</Note>
+
+## Authentication
+
+All requests require a Bearer token (your BookingShake API key):
+
+```
+Authorization: Bearer YOUR_API_KEY
+```
+
+## List products
+
+`GET /products` returns every active product of the authenticated venue.
+
+<CodeGroup>
+
+```bash cURL
+curl https://api.bookingshake.io/api/products \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+```javascript Node.js
+const res = await fetch("https://api.bookingshake.io/api/products", {
+  headers: { Authorization: `Bearer ${process.env.BOOKINGSHAKE_API_KEY}` },
+});
+const { data: products } = await res.json();
+```
+
+```python Python
+import os, requests
+
+res = requests.get(
+    "https://api.bookingshake.io/api/products",
+    headers={"Authorization": f"Bearer {os.environ['BOOKINGSHAKE_API_KEY']}"},
+)
+products = res.json()["data"]
+```
+
+```php PHP
+<?php
+$ch = curl_init("https://api.bookingshake.io/api/products");
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    "Authorization: Bearer " . getenv("BOOKINGSHAKE_API_KEY"),
+]);
+$products = json_decode(curl_exec($ch), true)["data"];
+curl_close($ch);
+```
+
+</CodeGroup>
+
+The catalog is returned wrapped in the standard `{ message, data }` envelope, where `data` is an array of product objects.
+
+```json
+{
+  "message": "success",
+  "data": [
+    {
+      "id": "product-123",
+      "title": "Forfait journée d'étude",
+      "subtitle": "Pause + déjeuner inclus",
+      "subsubtitle": null,
+      "description_html": "<p>Salle équipée, pauses et déjeuner.</p>",
+      "price": 4000,
+      "cost": 2500,
+      "vat": 2000,
+      "price_includes_tax": false,
+      "priced_per_person": true,
+      "is_accommodation": false,
+      "tag": "Séminaire",
+      "accounting_tag": "707-SEM",
+      "package_products": null,
+      "children_products": null,
+      "locale": [
+        { "lang": "en", "value": "Day delegate package", "description": null }
+      ],
+      "created_at": 1749722400000
+    }
+  ]
+}
+```
+
+## Get a product
+
+`GET /products/{id}` returns one product, in the same shape as the list items.
+
+<ParamField path="id" type="string" required>
+  The product document ID.
+</ParamField>
+
+<CodeGroup>
+
+```bash cURL
+curl https://api.bookingshake.io/api/products/product-123 \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+```javascript Node.js
+const res = await fetch("https://api.bookingshake.io/api/products/product-123", {
+  headers: { Authorization: `Bearer ${process.env.BOOKINGSHAKE_API_KEY}` },
+});
+const { data: product } = await res.json();
+```
+
+```python Python
+import os, requests
+
+res = requests.get(
+    "https://api.bookingshake.io/api/products/product-123",
+    headers={"Authorization": f"Bearer {os.environ['BOOKINGSHAKE_API_KEY']}"},
+)
+product = res.json()["data"]
+```
+
+```php PHP
+<?php
+$ch = curl_init("https://api.bookingshake.io/api/products/product-123");
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    "Authorization: Bearer " . getenv("BOOKINGSHAKE_API_KEY"),
+]);
+$product = json_decode(curl_exec($ch), true)["data"];
+curl_close($ch);
+```
+
+</CodeGroup>
+
+## Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique product ID |
+| `title` / `subtitle` / `subsubtitle` | string \| null | Product titles |
+| `description_html` | string \| null | Rich-text (HTML) description |
+| `price` | number \| null | Selling price, in **cents** |
+| `cost` | number \| null | Cost price, in **cents** |
+| `vat` | number \| null | VAT rate in **basis points** (200 = 2%) |
+| `price_includes_tax` | boolean \| null | Whether `price` is tax-inclusive |
+| `priced_per_person` | boolean \| null | Priced/quantified per person (quantity = number of guests) |
+| `is_accommodation` | boolean \| null | Whether the product is an accommodation (lodging) product |
+| `tag` / `accounting_tag` | string \| null | Catalog and accounting tags |
+| `package_products` | array \| null | For packages: sub-products `{ id, quantity, price?, price_includes_tax? }`. `price` (cents) and `price_includes_tax` are an optional per-product price override; absent means the sub-product follows its current catalog price. A non-empty array marks the product as a package. |
+| `children_products` | array \| null | IDs of child products |
+| `locale` | array \| null | Per-language translations `{ lang, value, description }` |
+| `created_at` | number \| null | Creation timestamp, Unix **milliseconds** |
+
+## Errors
+
+| Status | Meaning |
+|--------|---------|
+| `400` | Missing/invalid token, or missing product id (`GET /products/{id}`) |
+| `404` | Product not found — it does not exist, belongs to another venue, or has been deleted |
+| `429` | [Rate limit](/api-reference/rate-limiting) exceeded (60 requests/minute) |
+| `500` | Internal server error |
+
+<Note>
+  A `404` is returned uniformly whenever the product is outside your scope, so the existence of another venue's product is never disclosed.
+</Note>

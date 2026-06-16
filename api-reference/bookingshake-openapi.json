@@ -45,6 +45,10 @@
     {
       "name": "Contacts",
       "description": "Retrieve contacts (people)"
+    },
+    {
+      "name": "Products",
+      "description": "Retrieve the venue product catalog"
     }
   ],
   "paths": {
@@ -1787,6 +1791,195 @@
           }
         }
       }
+    },
+    "/products": {
+      "get": {
+        "summary": "List products",
+        "description": "Retrieve the full product catalog of your venue (the `/products` collection).\n\nReturns every active product; soft-deleted products (`isDeleted`) are excluded. There is no pagination — the whole catalog is returned in one call. Every field is always present with an explicit `null` when unset. Amounts are verbatim: `price`/`cost` in cents, `vat` in basis points (200 = 2%). A product is a package when its `package_products` array is non-empty.",
+        "operationId": "getProducts",
+        "tags": ["Products"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Product catalog retrieved successfully",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": { "type": "integer" },
+                "description": "Maximum requests allowed per minute (60 for this endpoint)"
+              },
+              "X-RateLimit-Remaining": {
+                "schema": { "type": "integer" },
+                "description": "Requests remaining in the current window"
+              },
+              "X-RateLimit-Reset": {
+                "schema": { "type": "integer" },
+                "description": "Unix timestamp when the rate limit resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "success" },
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/ProductResource" }
+                    }
+                  }
+                },
+                "example": {
+                  "message": "success",
+                  "data": [
+                    {
+                      "id": "product-123",
+                      "title": "Forfait journée d'étude",
+                      "subtitle": "Pause + déjeuner inclus",
+                      "subsubtitle": null,
+                      "description_html": "<p>Salle équipée, pauses et déjeuner.</p>",
+                      "price": 4000,
+                      "cost": 2500,
+                      "vat": 2000,
+                      "price_includes_tax": false,
+                      "priced_per_person": true,
+                      "is_accommodation": false,
+                      "tag": "Séminaire",
+                      "accounting_tag": "707-SEM",
+                      "package_products": null,
+                      "children_products": null,
+                      "locale": [
+                        { "lang": "en", "value": "Day delegate package", "description": null }
+                      ],
+                      "created_at": 1749722400000
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "message": "invalid token" }
+              }
+            }
+          },
+          "429": { "$ref": "#/components/responses/RateLimitExceeded" },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "message": "error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products/{id}": {
+      "get": {
+        "summary": "Get a product",
+        "description": "Retrieve a single product by its ID, in the same shape as `GET /products`.\n\nEvery field is always present with an explicit `null` when unset. Amounts are verbatim: `price`/`cost` in cents, `vat` in basis points (200 = 2%).",
+        "operationId": "getProduct",
+        "tags": ["Products"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Product document ID.",
+            "schema": { "type": "string" },
+            "example": "product-123"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product retrieved successfully",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": { "type": "integer" },
+                "description": "Maximum requests allowed per minute (60 for this endpoint)"
+              },
+              "X-RateLimit-Remaining": {
+                "schema": { "type": "integer" },
+                "description": "Requests remaining in the current window"
+              },
+              "X-RateLimit-Reset": {
+                "schema": { "type": "integer" },
+                "description": "Unix timestamp when the rate limit resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "success" },
+                    "data": { "$ref": "#/components/schemas/ProductResource" }
+                  }
+                },
+                "example": {
+                  "message": "success",
+                  "data": {
+                    "id": "product-123",
+                    "title": "Forfait séminaire 2 jours",
+                    "subtitle": null,
+                    "subsubtitle": null,
+                    "description_html": "<p>Hébergement, salles et restauration.</p>",
+                    "price": 35000,
+                    "cost": 22000,
+                    "vat": 1000,
+                    "price_includes_tax": true,
+                    "priced_per_person": true,
+                    "is_accommodation": false,
+                    "tag": "Package",
+                    "accounting_tag": null,
+                    "package_products": [
+                      { "id": "product-room", "quantity": 1, "price": 12000, "price_includes_tax": true },
+                      { "id": "product-meal", "quantity": 2 }
+                    ],
+                    "children_products": ["product-room", "product-meal"],
+                    "locale": null,
+                    "created_at": 1749722400000
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid token or missing product id",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "message": "invalid token" }
+              }
+            }
+          },
+          "404": {
+            "description": "Product not found. Returned when the product does not exist, belongs to another venue, or has been deleted.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "message": "not found" }
+              }
+            }
+          },
+          "429": { "$ref": "#/components/responses/RateLimitExceeded" },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "message": "error" }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2365,6 +2558,65 @@
           "created_at": { "type": "integer", "format": "int64", "nullable": true, "description": "Creation timestamp, Unix milliseconds" }
         },
         "additionalProperties": { "description": "Custom fields (custom_<uuid>) configured for your venue, with explicit null when unset" }
+      },
+      "ProductResource": {
+        "type": "object",
+        "description": "A product from your venue catalog. Every field is present with an explicit `null` when unset. Amounts are verbatim: `price`/`cost` in cents, `vat` in basis points (200 = 2%). A product is a package when its `package_products` array is non-empty.",
+        "properties": {
+          "id": { "type": "string", "description": "Unique product ID" },
+          "title": { "type": "string", "nullable": true, "description": "Product title" },
+          "subtitle": { "type": "string", "nullable": true, "description": "Product subtitle" },
+          "subsubtitle": { "type": "string", "nullable": true, "description": "Product third-level title" },
+          "description_html": { "type": "string", "nullable": true, "description": "Rich-text (HTML) description" },
+          "price": { "type": "integer", "nullable": true, "description": "Selling price, in cents" },
+          "cost": { "type": "integer", "nullable": true, "description": "Cost price, in cents" },
+          "vat": { "type": "integer", "nullable": true, "description": "VAT rate in basis points (200 = 2%)" },
+          "price_includes_tax": { "type": "boolean", "nullable": true, "description": "Whether `price` is tax-inclusive" },
+          "priced_per_person": { "type": "boolean", "nullable": true, "description": "Whether the product is priced/quantified per person (quantity = number of guests)" },
+          "is_accommodation": { "type": "boolean", "nullable": true, "description": "Whether the product is an accommodation (lodging) product" },
+          "tag": { "type": "string", "nullable": true, "description": "Catalog tag" },
+          "accounting_tag": { "type": "string", "nullable": true, "description": "Accounting tag" },
+          "package_products": {
+            "type": "array",
+            "nullable": true,
+            "description": "For packages: the products composing this package (non-empty marks the product as a package).",
+            "items": { "$ref": "#/components/schemas/ProductPackageEntry" }
+          },
+          "children_products": {
+            "type": "array",
+            "nullable": true,
+            "description": "IDs of child products",
+            "items": { "type": "string" }
+          },
+          "locale": {
+            "type": "array",
+            "nullable": true,
+            "description": "Per-language translations of the title/description",
+            "items": { "$ref": "#/components/schemas/ProductLocale" }
+          },
+          "created_at": { "type": "integer", "format": "int64", "nullable": true, "description": "Creation timestamp, Unix milliseconds" }
+        }
+      },
+      "ProductPackageEntry": {
+        "type": "object",
+        "description": "A sub-product within a package. `price` and `price_includes_tax` are an optional per-product price override (price in cents); when absent, the sub-product follows its current catalog price.",
+        "properties": {
+          "id": { "type": "string", "description": "Sub-product ID" },
+          "quantity": { "type": "number", "description": "Quantity of the sub-product in the package" },
+          "price": { "type": "integer", "description": "Optional price override, in cents (absent when not overridden)" },
+          "price_includes_tax": { "type": "boolean", "description": "Optional tax-inclusiveness of the override price (absent when not overridden)" }
+        },
+        "required": ["id", "quantity"]
+      },
+      "ProductLocale": {
+        "type": "object",
+        "description": "A per-language translation of a product.",
+        "properties": {
+          "lang": { "type": "string", "description": "Language code (e.g. en, fr)" },
+          "value": { "type": "string", "nullable": true, "description": "Translated title" },
+          "description": { "type": "string", "nullable": true, "description": "Translated description" }
+        },
+        "required": ["lang"]
       },
       "UpdateContactRequest": {
         "type": "object",

@@ -42,7 +42,8 @@
 							"api-reference/contacts-update",
 							"api-reference/invoices",
 							"api-reference/payments",
-							"api-reference/payments-update"
+							"api-reference/payments-update",
+							"api-reference/products"
 						]
 					},
 					{
@@ -103,6 +104,13 @@
 						"pages": [
 							"GET /payments/{id}",
 								"PATCH /payments/{id}"
+						]
+					},
+					{
+						"group": "Products",
+						"pages": [
+							"GET /products",
+							"GET /products/{id}"
 						]
 					}
 				]
