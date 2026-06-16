@@ -112,8 +112,8 @@ All body fields are optional, but **at least one** must be provided. String fiel
   Accounting account code.
 </ParamField>
 
-<ParamField body="custom_<uuid>" type="any">
-  [Custom fields](/api-reference/webhooks/introduction#custom-fields) configured for your venue. An unknown custom field key is rejected with `400`.
+<ParamField body="custom_<uuid>" type="string | array">
+  [Custom fields](/api-reference/webhooks/introduction#custom-fields) configured for your venue. A single-value field takes a string; a multi-select field takes an array of strings. An unknown custom field key, or a value whose shape does not match the field type, is rejected with `400`.
 </ParamField>
 
 ## Request

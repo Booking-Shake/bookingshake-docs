@@ -1265,6 +1265,120 @@
             }
           }
         }
+      },
+      "patch": {
+        "summary": "Update a contact",
+        "description": "Partially update a contact (person) by its ID. Only the fields provided in the body are modified; omitted fields are left unchanged.\n\nThe body follows the same contract as the response (English snake_case names). String fields are trimmed and limited to 255 characters; `optin_marketing` and `optin_general` are booleans; `email` must be a valid email address; `account_id` must reference an existing account within the contact's venue or venues group. Pass `null` on any field to clear it. The `country` field is stored verbatim. Custom fields (`custom_<uuid>`) configured for your venue can be set too (string or array of strings); an unknown custom field key is rejected with `400`. `id` and `created_at` are read-only and ignored.\n\nUpdating a contact automatically emits the `contact.updated` webhook when at least one exposed field changes.",
+        "operationId": "updateContact",
+        "tags": ["Contacts"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Contact ID (the `id` field carried by the contact.* webhooks).",
+            "schema": { "type": "string" },
+            "example": "contact-456"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateContactRequest" },
+              "example": {
+                "position": "Head of Operations",
+                "phone": "+33611111111",
+                "optin_marketing": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Contact updated successfully. Returns the full contact in its post-update state.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": { "type": "integer" },
+                "description": "Maximum requests allowed per minute (30 for this endpoint)"
+              },
+              "X-RateLimit-Remaining": {
+                "schema": { "type": "integer" },
+                "description": "Requests remaining in the current window"
+              },
+              "X-RateLimit-Reset": {
+                "schema": { "type": "integer" },
+                "description": "Unix timestamp when the rate limit resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "success" },
+                    "data": { "$ref": "#/components/schemas/ContactResource" }
+                  }
+                },
+                "example": {
+                  "message": "success",
+                  "data": {
+                    "id": "contact-456",
+                    "first_name": "John",
+                    "last_name": "Doe",
+                    "email": "john.doe@example.com",
+                    "phone": "+33611111111",
+                    "landline_phone": "+33145678901",
+                    "title": "CEO",
+                    "position": "Head of Operations",
+                    "avatar": null,
+                    "comments": null,
+                    "account_id": "account-123",
+                    "optin_marketing": false,
+                    "optin_general": false,
+                    "address_line_1": "10 rue Example",
+                    "address_line_2": null,
+                    "postal_code": "75001",
+                    "city": "Paris",
+                    "country": "France",
+                    "created_at": 1731493800000,
+                    "custom_u1v2w3x4y5": "VIP",
+                    "custom_z6a7b8c9d0": null
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid token, missing contact id, empty/invalid body, no updatable fields, a wrongly-typed value, a value over 255 characters, an invalid email, an `account_id` outside the contact's scope, or an unknown custom field key.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "message": "no updatable fields provided" }
+              }
+            }
+          },
+          "404": {
+            "description": "Contact not found. Returned when the contact does not exist, or belongs to another venue or venues group.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "message": "not found" }
+              }
+            }
+          },
+          "429": { "$ref": "#/components/responses/RateLimitExceeded" },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "message": "error" }
+              }
+            }
+          }
+        }
       }
     },
     "/invoices/{id}": {
@@ -2224,7 +2338,7 @@
           "billing_country": { "type": "string", "maxLength": 255, "nullable": true, "description": "Billing address country, stored verbatim" },
           "accounting_account": { "type": "string", "maxLength": 255, "nullable": true, "description": "Accounting account code" }
         },
-        "additionalProperties": { "description": "Custom fields (custom_<uuid>) configured for your venue. An unknown custom field key is rejected with 400." }
+        "additionalProperties": { "description": "Custom fields (custom_<uuid>) configured for your venue: a string (single-value field) or an array of strings (multi-select field). An unknown custom field key, or a value whose shape does not match the field type, is rejected with 400." }
       },
       "ContactResource": {
         "type": "object",
@@ -2251,6 +2365,31 @@
           "created_at": { "type": "integer", "format": "int64", "nullable": true, "description": "Creation timestamp, Unix milliseconds" }
         },
         "additionalProperties": { "description": "Custom fields (custom_<uuid>) configured for your venue, with explicit null when unset" }
+      },
+      "UpdateContactRequest": {
+        "type": "object",
+        "description": "Fields that can be updated on a contact. All fields are optional (partial update): only the fields present in the body are modified. Same conventions as the response (English snake_case names). String fields are trimmed and limited to 255 characters; `email` must be a valid email address; `optin_marketing`/`optin_general` are booleans; `account_id` must reference an existing account within the contact's venue or venues group. Pass null on any field to clear it. The country field is stored verbatim. Custom fields (custom_<uuid>) configured for your venue can be set too (string or array of strings); an unknown custom field key is rejected with 400. `id` and `created_at` are read-only and ignored. At least one field must be provided.",
+        "minProperties": 1,
+        "properties": {
+          "first_name": { "type": "string", "maxLength": 255, "nullable": true, "description": "First name" },
+          "last_name": { "type": "string", "maxLength": 255, "nullable": true, "description": "Last name" },
+          "email": { "type": "string", "format": "email", "maxLength": 255, "nullable": true, "description": "Email address (validated; pass null to clear)" },
+          "phone": { "type": "string", "maxLength": 255, "nullable": true, "description": "Mobile phone number" },
+          "landline_phone": { "type": "string", "maxLength": 255, "nullable": true, "description": "Landline phone number" },
+          "title": { "type": "string", "maxLength": 255, "nullable": true, "description": "Contact's title" },
+          "position": { "type": "string", "maxLength": 255, "nullable": true, "description": "Job position" },
+          "avatar": { "type": "string", "maxLength": 255, "nullable": true, "description": "Avatar image URL" },
+          "comments": { "type": "string", "maxLength": 255, "nullable": true, "description": "Free-text notes about the contact" },
+          "account_id": { "type": "string", "nullable": true, "description": "ID of an existing account (company) to link the contact to; must be within the contact's venue or venues group. Pass null to unlink." },
+          "optin_marketing": { "type": "boolean", "nullable": true, "description": "Marketing communications opt-in" },
+          "optin_general": { "type": "boolean", "nullable": true, "description": "General communications opt-in" },
+          "address_line_1": { "type": "string", "maxLength": 255, "nullable": true, "description": "Address" },
+          "address_line_2": { "type": "string", "maxLength": 255, "nullable": true, "description": "Address, line 2" },
+          "postal_code": { "type": "string", "maxLength": 255, "nullable": true, "description": "Postal code" },
+          "city": { "type": "string", "maxLength": 255, "nullable": true, "description": "City" },
+          "country": { "type": "string", "maxLength": 255, "nullable": true, "description": "Country, stored verbatim" }
+        },
+        "additionalProperties": { "description": "Custom fields (custom_<uuid>) configured for your venue: a string or an array of strings. An unknown custom field key is rejected with 400." }
       },
       "Invoice": {
         "type": "object",

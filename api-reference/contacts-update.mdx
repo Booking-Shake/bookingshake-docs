@@ -1,0 +1,227 @@
+---
+title: "Update a Contact"
+description: "Partially update a single contact (person) by its ID"
+icon: "pen-to-square"
+---
+
+<Warning>
+  **Beta** — Contact data is currently in beta. The payload structure may still evolve before general availability. Share your feedback at [support@bookingshake.com](mailto:support@bookingshake.com).
+</Warning>
+
+## Overview
+
+`PATCH /contacts/{id}` updates a single contact (person) by its ID. It is a **partial** update: only the fields you include in the body are modified, everything else is left untouched.
+
+The request body uses the **same conventions as the response** — the English (snake_case) field names returned by [`GET /contacts/{id}`](/api-reference/contacts). So you can read a contact, change a few fields, and send them straight back. Pass `null` on any field to clear it.
+
+<Note>
+  Updating a contact automatically emits the [`contact.updated`](/api-reference/webhooks/contacts) webhook when at least one exposed field changes. The `country` field is stored **verbatim** as provided — no ISO normalization.
+</Note>
+
+## Authentication
+
+All requests require a Bearer token (your BookingShake API key):
+
+```
+Authorization: Bearer YOUR_API_KEY
+```
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+  The contact ID — the `id` field carried by the `contact.*` webhooks.
+</ParamField>
+
+## Body Parameters
+
+All body fields are optional, but **at least one** must be provided. String fields are trimmed and limited to 255 characters. Pass `null` on any field to clear it. `id` and `created_at` are read-only and ignored.
+
+<ParamField body="first_name" type="string">
+  First name.
+</ParamField>
+
+<ParamField body="last_name" type="string">
+  Last name.
+</ParamField>
+
+<ParamField body="email" type="string">
+  Email address. Must be a valid email when provided; pass `null` to clear it.
+</ParamField>
+
+<ParamField body="phone" type="string">
+  Mobile phone number.
+</ParamField>
+
+<ParamField body="landline_phone" type="string">
+  Landline phone number.
+</ParamField>
+
+<ParamField body="title" type="string">
+  Contact's title.
+</ParamField>
+
+<ParamField body="position" type="string">
+  Job position.
+</ParamField>
+
+<ParamField body="avatar" type="string">
+  Avatar image URL.
+</ParamField>
+
+<ParamField body="comments" type="string">
+  Free-text notes about the contact.
+</ParamField>
+
+<ParamField body="account_id" type="string">
+  ID of an existing [account](/api-reference/accounts) (company) to link the contact to. Must reference an account within the contact's venue or venues group, otherwise the request is rejected with `400`. Pass `null` to unlink.
+</ParamField>
+
+<ParamField body="optin_marketing" type="boolean">
+  Marketing communications opt-in. Must be `true`, `false`, or `null`.
+</ParamField>
+
+<ParamField body="optin_general" type="boolean">
+  General communications opt-in. Must be `true`, `false`, or `null`.
+</ParamField>
+
+<ParamField body="address_line_1" type="string">
+  Address.
+</ParamField>
+
+<ParamField body="address_line_2" type="string">
+  Address, line 2.
+</ParamField>
+
+<ParamField body="postal_code" type="string">
+  Postal code.
+</ParamField>
+
+<ParamField body="city" type="string">
+  City.
+</ParamField>
+
+<ParamField body="country" type="string">
+  Country, stored **verbatim**.
+</ParamField>
+
+<ParamField body="custom_<uuid>" type="string | array">
+  [Custom fields](/api-reference/webhooks/introduction#custom-fields) configured for your venue. A single-value field takes a string; a multi-select field takes an array of strings. An unknown custom field key is rejected with `400`.
+</ParamField>
+
+## Request
+
+<CodeGroup>
+
+```bash cURL
+curl -X PATCH https://api.bookingshake.io/api/contacts/contact-456 \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "position": "Head of Operations", "phone": "+33611111111", "optin_marketing": false }'
+```
+
+```javascript Node.js
+const res = await fetch("https://api.bookingshake.io/api/contacts/contact-456", {
+  method: "PATCH",
+  headers: {
+    Authorization: `Bearer ${process.env.BOOKINGSHAKE_API_KEY}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    position: "Head of Operations",
+    phone: "+33611111111",
+    optin_marketing: false,
+  }),
+});
+const { data: contact } = await res.json();
+```
+
+```python Python
+import os, requests
+
+res = requests.patch(
+    "https://api.bookingshake.io/api/contacts/contact-456",
+    headers={"Authorization": f"Bearer {os.environ['BOOKINGSHAKE_API_KEY']}"},
+    json={"position": "Head of Operations", "phone": "+33611111111", "optin_marketing": False},
+)
+contact = res.json()["data"]
+```
+
+```php PHP
+<?php
+$ch = curl_init("https://api.bookingshake.io/api/contacts/contact-456");
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PATCH");
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+    "position" => "Head of Operations",
+    "phone" => "+33611111111",
+    "optin_marketing" => false,
+]));
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    "Authorization: Bearer " . getenv("BOOKINGSHAKE_API_KEY"),
+    "Content-Type: application/json",
+]);
+$contact = json_decode(curl_exec($ch), true)["data"];
+curl_close($ch);
+```
+
+</CodeGroup>
+
+## Response
+
+The full contact is returned in its **post-update** state, wrapped in the standard `{ message, data }` envelope — identical in shape to [`GET /contacts/{id}`](/api-reference/contacts).
+
+```json
+{
+  "message": "success",
+  "data": {
+    "id": "contact-456",
+    "first_name": "John",
+    "last_name": "Doe",
+    "email": "john.doe@example.com",
+    "phone": "+33611111111",
+    "landline_phone": "+33145678901",
+    "title": "CEO",
+    "position": "Head of Operations",
+    "avatar": null,
+    "comments": null,
+    "account_id": "account-123",
+    "optin_marketing": false,
+    "optin_general": false,
+    "address_line_1": "10 rue Example",
+    "address_line_2": null,
+    "postal_code": "75001",
+    "city": "Paris",
+    "country": "France",
+    "created_at": 1731493800000,
+    "custom_u1v2w3x4y5": "VIP",
+    "custom_z6a7b8c9d0": null
+  }
+}
+```
+
+See the [Get a Contact](/api-reference/contacts#data-fields) reference for the full field descriptions.
+
+## Errors
+
+| Status | Meaning |
+|--------|---------|
+| `400` | Missing/invalid token, missing contact id, empty/invalid body, no updatable fields, a wrongly-typed value (e.g. a non-string on a string field, a non-boolean opt-in), a value over 255 characters, an invalid email, an `account_id` outside the contact's scope, or an unknown custom field key |
+| `404` | Contact not found — it does not exist, or belongs to another venue or venues group |
+| `429` | [Rate limit](/api-reference/rate-limiting) exceeded (30 requests/minute) |
+| `500` | Internal server error |
+
+<Note>
+  A `404` is returned uniformly whenever the contact is outside your scope, so the existence of another venue's contact is never disclosed.
+</Note>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Get a Contact" icon="user" href="/api-reference/contacts">
+    Retrieve a contact before updating it
+  </Card>
+
+  <Card title="Contact Events" icon="user" href="/api-reference/webhooks/contacts">
+    Receive contact changes in real time via the contact.* webhooks
+  </Card>
+</CardGroup>

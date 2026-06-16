@@ -39,6 +39,7 @@
 							"api-reference/accounts",
 							"api-reference/accounts-update",
 							"api-reference/contacts",
+							"api-reference/contacts-update",
 							"api-reference/invoices",
 							"api-reference/payments",
 							"api-reference/payments-update"
@@ -87,7 +88,8 @@
 					{
 						"group": "Contacts",
 						"pages": [
-							"GET /contacts/{id}"
+							"GET /contacts/{id}",
+							"PATCH /contacts/{id}"
 						]
 					},
 					{
