@@ -1,0 +1,166 @@
+---
+title: "Update a Payment"
+description: "Partially update a single payment by its document ID"
+icon: "pen-to-square"
+---
+
+<Warning>
+  **Beta** — Payment data is currently in beta. The payload structure may still evolve before general availability. Share your feedback at [support@bookingshake.com](mailto:support@bookingshake.com).
+</Warning>
+
+## Overview
+
+`PATCH /payments/{id}` updates a single payment by its document ID. It is a **partial** update: only the fields you include in the body are modified, everything else is left untouched.
+
+The request body uses the **same conventions as the response** — `amount` in integer cents, dates as `YYYY-MM-DD` (interpreted in the `Europe/Paris` timezone), and `status` verbatim. So you can read a payment with [`GET /payments/{id}`](/api-reference/payments), change a few fields, and send them straight back.
+
+<Note>
+  Updating a payment automatically emits the [`payment.updated`](/api-reference/webhooks/payments) webhook when at least one exposed field changes. **Security deposits (holds) are out of scope** and return `404`, consistent with the payment webhooks.
+</Note>
+
+## Authentication
+
+All requests require a Bearer token (your BookingShake API key):
+
+```
+Authorization: Bearer YOUR_API_KEY
+```
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+  The payment document ID — the `id` field carried by the `payment.*` webhooks.
+</ParamField>
+
+## Body Parameters
+
+All body fields are optional, but **at least one** must be provided.
+
+<ParamField body="name" type="string">
+  Payment label.
+</ParamField>
+
+<ParamField body="amount" type="integer">
+  Amount in integer **cents** (e.g., `90000` = €900.00). Must be a non-negative integer.
+</ParamField>
+
+<ParamField body="status" type="string">
+  One of `waiting`, `paid`, or `canceled`.
+</ParamField>
+
+<ParamField body="method" type="string">
+  Payment method label, stored **verbatim**.
+</ParamField>
+
+<ParamField body="received_date" type="string">
+  Date the payment was received, `YYYY-MM-DD`. Pass `null` to clear it.
+</ParamField>
+
+<ParamField body="due_date" type="string">
+  Date the payment is expected, `YYYY-MM-DD`. Pass `null` to clear it.
+</ParamField>
+
+## Request
+
+<CodeGroup>
+
+```bash cURL
+curl -X PATCH https://api.bookingshake.io/api/payments/payment-789 \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "status": "paid", "received_date": "2026-06-10" }'
+```
+
+```javascript Node.js
+const res = await fetch("https://api.bookingshake.io/api/payments/payment-789", {
+  method: "PATCH",
+  headers: {
+    Authorization: `Bearer ${process.env.BOOKINGSHAKE_API_KEY}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({ status: "paid", received_date: "2026-06-10" }),
+});
+const { data: payment } = await res.json();
+```
+
+```python Python
+import os, requests
+
+res = requests.patch(
+    "https://api.bookingshake.io/api/payments/payment-789",
+    headers={"Authorization": f"Bearer {os.environ['BOOKINGSHAKE_API_KEY']}"},
+    json={"status": "paid", "received_date": "2026-06-10"},
+)
+payment = res.json()["data"]
+```
+
+```php PHP
+<?php
+$ch = curl_init("https://api.bookingshake.io/api/payments/payment-789");
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PATCH");
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+    "status" => "paid",
+    "received_date" => "2026-06-10",
+]));
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    "Authorization: Bearer " . getenv("BOOKINGSHAKE_API_KEY"),
+    "Content-Type: application/json",
+]);
+$payment = json_decode(curl_exec($ch), true)["data"];
+curl_close($ch);
+```
+
+</CodeGroup>
+
+## Response
+
+The full payment is returned in its **post-update** state, wrapped in the standard `{ message, data }` envelope — identical in shape to [`GET /payments/{id}`](/api-reference/payments).
+
+```json
+{
+  "message": "success",
+  "data": {
+    "id": "payment-789",
+    "amount": 90000,
+    "status": "paid",
+    "name": "Acompte 30%",
+    "method": "Virement bancaire",
+    "received_date": "2026-06-10",
+    "due_date": "2026-06-15",
+    "created_at": 1749549600000,
+    "updated_at": 1749722400000,
+    "invoice_id": "file-456",
+    "invoice_number": "FAC-2026-0021",
+    "quote_id": "quote-123",
+    "booking_id": "booking-abc"
+  }
+}
+```
+
+See the [Get a Payment](/api-reference/payments#fields) reference for the full field descriptions.
+
+## Errors
+
+| Status | Meaning |
+|--------|---------|
+| `400` | Missing/invalid token, missing payment id, empty/invalid body, no updatable fields, or a field that fails validation (unknown `status`, non-integer `amount`, malformed date) |
+| `404` | Payment not found — it does not exist, belongs to another venue, or is a security deposit (hold) |
+| `429` | [Rate limit](/api-reference/rate-limiting) exceeded (30 requests/minute) |
+| `500` | Internal server error |
+
+<Note>
+  A `404` is returned uniformly whenever the payment is outside your scope, so the existence of another venue's payment is never disclosed.
+</Note>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Get a Payment" icon="credit-card" href="/api-reference/payments">
+    Retrieve a payment before updating it
+  </Card>
+
+  <Card title="Payment Events" icon="credit-card" href="/api-reference/webhooks/payments">
+    Receive payment changes in real time via the payment.* webhooks
+  </Card>
+</CardGroup>

@@ -1448,6 +1448,114 @@
             }
           }
         }
+      },
+      "patch": {
+        "summary": "Update a payment",
+        "description": "Partially update a payment by its document ID. Only the fields provided in the body are modified; omitted fields are left unchanged.\n\nThe body follows the same contract as the response: `amount` in integer cents, dates as `YYYY-MM-DD` (interpreted in `Europe/Paris`), and `status` verbatim. The `received_date` and `due_date` fields accept `null` to clear them.\n\nUpdating a payment automatically emits the `payment.updated` webhook. Security deposits (holds) are out of scope and return `404`.",
+        "operationId": "updatePayment",
+        "tags": ["Payments"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Payment document ID (the `id` field carried by the payment.* webhooks).",
+            "schema": { "type": "string" },
+            "example": "payment-789"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdatePaymentRequest" },
+              "example": {
+                "status": "paid",
+                "received_date": "2026-06-10",
+                "amount": 90000
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Payment updated successfully. Returns the full payment in its post-update state.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": { "type": "integer" },
+                "description": "Maximum requests allowed per minute (30 for this endpoint)"
+              },
+              "X-RateLimit-Remaining": {
+                "schema": { "type": "integer" },
+                "description": "Requests remaining in the current window"
+              },
+              "X-RateLimit-Reset": {
+                "schema": { "type": "integer" },
+                "description": "Unix timestamp when the rate limit resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "success" },
+                    "data": { "$ref": "#/components/schemas/Payment" }
+                  }
+                },
+                "example": {
+                  "message": "success",
+                  "data": {
+                    "id": "payment-789",
+                    "amount": 90000,
+                    "status": "paid",
+                    "name": "Acompte 30%",
+                    "method": "Virement bancaire",
+                    "received_date": "2026-06-10",
+                    "due_date": "2026-06-15",
+                    "created_at": 1749549600000,
+                    "updated_at": 1749722400000,
+                    "invoice_id": "file-456",
+                    "invoice_number": "FAC-2026-0021",
+                    "quote_id": "quote-123",
+                    "booking_id": "booking-abc"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid token, missing payment id, empty/invalid body, no updatable fields, or a field that fails validation (e.g. unknown status, non-integer amount, malformed date).",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "message": "status must be one of: waiting, paid, canceled" }
+              }
+            }
+          },
+          "404": {
+            "description": "Payment not found. Returned when the payment does not exist, belongs to another venue, or is a security deposit (hold).",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "message": "not found" }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitExceeded"
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "message": "error" }
+              }
+            }
+          }
+        }
       }
     }
   },
@@ -2148,6 +2256,20 @@
           "invoice_number": { "type": "string", "nullable": true, "description": "Number of the linked invoice, denormalized for convenience" },
           "quote_id": { "type": "string", "nullable": true, "description": "ID of the linked quote" },
           "booking_id": { "type": "string", "nullable": true, "description": "Opaque correlation key of the booking, shared by all payments and invoices of the same booking" }
+        }
+      },
+      "UpdatePaymentRequest": {
+        "type": "object",
+        "description": "Fields that can be updated on a payment. All fields are optional (partial update): only the fields present in the body are modified. Same conventions as the response — `amount` in integer cents, dates as `YYYY-MM-DD` in the `Europe/Paris` timezone. At least one field must be provided.",
+        "minProperties": 1,
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "maxLength": 255, "description": "Payment label", "example": "Acompte 30%" },
+          "amount": { "type": "integer", "minimum": 0, "description": "Amount in integer cents", "example": 90000 },
+          "status": { "type": "string", "enum": ["waiting", "paid", "canceled"], "example": "paid" },
+          "method": { "type": "string", "maxLength": 255, "description": "Payment method, verbatim label", "example": "Virement bancaire" },
+          "received_date": { "type": "string", "format": "date", "nullable": true, "description": "Date the payment was received, YYYY-MM-DD. Pass null to clear.", "example": "2026-06-10" },
+          "due_date": { "type": "string", "format": "date", "nullable": true, "description": "Date the payment is expected, YYYY-MM-DD. Pass null to clear.", "example": "2026-06-15" }
         }
       }
     },
