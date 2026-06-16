@@ -96,6 +96,7 @@ The account is returned wrapped in the standard `{ message, data }` envelope.
     "billing_postal_code": "75001",
     "billing_city": "Paris",
     "billing_country": "France",
+    "accounting_account": "411000",
     "created_at": 1731495000000,
     "custom_u1v2w3x4y5": "50-100",
     "custom_z6a7b8c9d0": null
@@ -126,6 +127,7 @@ The account is returned wrapped in the standard `{ message, data }` envelope.
 | `billing_postal_code` | string \| null | Billing address postal code |
 | `billing_city` | string \| null | Billing address city |
 | `billing_country` | string \| null | Billing address country, verbatim as entered |
+| `accounting_account` | string \| null | Accounting account code |
 | `created_at` | number \| null | Creation timestamp, Unix milliseconds |
 | `custom_<uuid>` | any \| null | [Custom fields](/api-reference/webhooks/introduction#custom-fields) configured for your venue |
 

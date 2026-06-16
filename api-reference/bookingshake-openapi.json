@@ -1009,6 +1009,7 @@
                     "billing_postal_code": "75001",
                     "billing_city": "Paris",
                     "billing_country": "France",
+                    "accounting_account": "411000",
                     "created_at": 1731495000000,
                     "custom_u1v2w3x4y5": "50-100",
                     "custom_z6a7b8c9d0": null
@@ -1023,6 +1024,121 @@
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/ErrorResponse" },
                 "example": { "message": "invalid token" }
+              }
+            }
+          },
+          "404": {
+            "description": "Account not found. Returned when the account does not exist, or belongs to another venue or venues group.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "message": "not found" }
+              }
+            }
+          },
+          "429": { "$ref": "#/components/responses/RateLimitExceeded" },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "message": "error" }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update an account",
+        "description": "Partially update an account (company) by its ID. Only the fields provided in the body are modified; omitted fields are left unchanged.\n\nThe body follows the same contract as the response (English snake_case names). String fields are trimmed and limited to 255 characters; pass `null` on any field to clear it. Country fields are stored verbatim. Custom fields (`custom_<uuid>`) configured for your venue can be set too; an unknown custom field key is rejected with `400`.\n\nUpdating an account automatically emits the `account.updated` webhook when at least one exposed field changes.",
+        "operationId": "updateAccount",
+        "tags": ["Accounts"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Account ID (the `id` field carried by the account.* webhooks).",
+            "schema": { "type": "string" },
+            "example": "account-123"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateAccountRequest" },
+              "example": {
+                "name": "Acme Corp",
+                "vat_number": "FR98765432101"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Account updated successfully. Returns the full account in its post-update state.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": { "type": "integer" },
+                "description": "Maximum requests allowed per minute (30 for this endpoint)"
+              },
+              "X-RateLimit-Remaining": {
+                "schema": { "type": "integer" },
+                "description": "Requests remaining in the current window"
+              },
+              "X-RateLimit-Reset": {
+                "schema": { "type": "integer" },
+                "description": "Unix timestamp when the rate limit resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "success" },
+                    "data": { "$ref": "#/components/schemas/Account" }
+                  }
+                },
+                "example": {
+                  "message": "success",
+                  "data": {
+                    "id": "account-123",
+                    "name": "Acme Corp",
+                    "legal_name": "ACME CORPORATION SAS",
+                    "company_type": "SAS",
+                    "company_registration_id": "987654321",
+                    "siret": "98765432100012",
+                    "vat_number": "FR98765432101",
+                    "rcs_number": "RCS Paris 987 654 321",
+                    "sector": "Technology",
+                    "address_line_1": "123 rue Example",
+                    "address_line_2": "Bâtiment A",
+                    "postal_code": "75001",
+                    "city": "Paris",
+                    "country": "France",
+                    "billing_address_line_1": "123 rue Example",
+                    "billing_address_line_2": null,
+                    "billing_postal_code": "75001",
+                    "billing_city": "Paris",
+                    "billing_country": "France",
+                    "accounting_account": "411000",
+                    "created_at": 1731495000000,
+                    "custom_u1v2w3x4y5": "50-100",
+                    "custom_z6a7b8c9d0": null
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid token, missing account id, empty/invalid body, no updatable fields, a non-string value on a string field, a value over 255 characters, or an unknown custom field key.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "message": "no updatable fields provided" }
               }
             }
           },
@@ -2078,9 +2194,37 @@
           "billing_postal_code": { "type": "string", "nullable": true, "description": "Billing address postal code" },
           "billing_city": { "type": "string", "nullable": true, "description": "Billing address city" },
           "billing_country": { "type": "string", "nullable": true, "description": "Billing address country, verbatim as entered" },
+          "accounting_account": { "type": "string", "nullable": true, "description": "Accounting account code" },
           "created_at": { "type": "integer", "format": "int64", "nullable": true, "description": "Creation timestamp, Unix milliseconds" }
         },
         "additionalProperties": { "description": "Custom fields (custom_<uuid>) configured for your venue, with explicit null when unset" }
+      },
+      "UpdateAccountRequest": {
+        "type": "object",
+        "description": "Fields that can be updated on an account. All fields are optional (partial update): only the fields present in the body are modified. Same conventions as the response (English snake_case names). String fields are trimmed and limited to 255 characters; pass null on any field to clear it. Country fields are stored verbatim. Custom fields (custom_<uuid>) configured for your venue can be set too; an unknown custom field key is rejected with 400. `id` and `created_at` are read-only and ignored. At least one field must be provided.",
+        "minProperties": 1,
+        "properties": {
+          "name": { "type": "string", "maxLength": 255, "nullable": true, "description": "Company display name" },
+          "legal_name": { "type": "string", "maxLength": 255, "nullable": true, "description": "Registered legal name" },
+          "company_type": { "type": "string", "maxLength": 255, "nullable": true, "description": "Legal form (e.g. SAS, SARL)" },
+          "company_registration_id": { "type": "string", "maxLength": 255, "nullable": true, "description": "Company registration number (SIREN in France)" },
+          "siret": { "type": "string", "maxLength": 255, "nullable": true, "description": "SIRET number (France)" },
+          "vat_number": { "type": "string", "maxLength": 255, "nullable": true, "description": "VAT number" },
+          "rcs_number": { "type": "string", "maxLength": 255, "nullable": true, "description": "Trade register number (RCS)" },
+          "sector": { "type": "string", "maxLength": 255, "nullable": true, "description": "Business sector" },
+          "address_line_1": { "type": "string", "maxLength": 255, "nullable": true, "description": "Main address" },
+          "address_line_2": { "type": "string", "maxLength": 255, "nullable": true, "description": "Main address, line 2" },
+          "postal_code": { "type": "string", "maxLength": 255, "nullable": true, "description": "Main address postal code" },
+          "city": { "type": "string", "maxLength": 255, "nullable": true, "description": "Main address city" },
+          "country": { "type": "string", "maxLength": 255, "nullable": true, "description": "Main address country, stored verbatim" },
+          "billing_address_line_1": { "type": "string", "maxLength": 255, "nullable": true, "description": "Billing address" },
+          "billing_address_line_2": { "type": "string", "maxLength": 255, "nullable": true, "description": "Billing address, line 2" },
+          "billing_postal_code": { "type": "string", "maxLength": 255, "nullable": true, "description": "Billing address postal code" },
+          "billing_city": { "type": "string", "maxLength": 255, "nullable": true, "description": "Billing address city" },
+          "billing_country": { "type": "string", "maxLength": 255, "nullable": true, "description": "Billing address country, stored verbatim" },
+          "accounting_account": { "type": "string", "maxLength": 255, "nullable": true, "description": "Accounting account code" }
+        },
+        "additionalProperties": { "description": "Custom fields (custom_<uuid>) configured for your venue. An unknown custom field key is rejected with 400." }
       },
       "ContactResource": {
         "type": "object",

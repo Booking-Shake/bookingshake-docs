@@ -1,0 +1,232 @@
+---
+title: "Update an Account"
+description: "Partially update a single account (company) by its ID"
+icon: "pen-to-square"
+---
+
+<Warning>
+  **Beta** — Account data is currently in beta. The payload structure may still evolve before general availability. Share your feedback at [support@bookingshake.com](mailto:support@bookingshake.com).
+</Warning>
+
+## Overview
+
+`PATCH /accounts/{id}` updates a single account (company) by its ID. It is a **partial** update: only the fields you include in the body are modified, everything else is left untouched.
+
+The request body uses the **same conventions as the response** — the English (snake_case) field names returned by [`GET /accounts/{id}`](/api-reference/accounts). So you can read an account, change a few fields, and send them straight back. Pass `null` on any field to clear it.
+
+<Note>
+  Updating an account automatically emits the [`account.updated`](/api-reference/webhooks/accounts) webhook when at least one exposed field changes. Country fields (`country`, `billing_country`) are stored **verbatim** as provided — no ISO normalization.
+</Note>
+
+## Authentication
+
+All requests require a Bearer token (your BookingShake API key):
+
+```
+Authorization: Bearer YOUR_API_KEY
+```
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+  The account ID — the `id` field carried by the `account.*` webhooks.
+</ParamField>
+
+## Body Parameters
+
+All body fields are optional, but **at least one** must be provided. String fields are trimmed and limited to 255 characters. Pass `null` on any field to clear it. `id` and `created_at` are read-only and ignored.
+
+<ParamField body="name" type="string">
+  Company display name.
+</ParamField>
+
+<ParamField body="legal_name" type="string">
+  Registered legal name.
+</ParamField>
+
+<ParamField body="company_type" type="string">
+  Legal form (e.g., `SAS`, `SARL`).
+</ParamField>
+
+<ParamField body="company_registration_id" type="string">
+  Company registration number (SIREN in France).
+</ParamField>
+
+<ParamField body="siret" type="string">
+  SIRET number (France).
+</ParamField>
+
+<ParamField body="vat_number" type="string">
+  VAT number.
+</ParamField>
+
+<ParamField body="rcs_number" type="string">
+  Trade register number (RCS).
+</ParamField>
+
+<ParamField body="sector" type="string">
+  Business sector.
+</ParamField>
+
+<ParamField body="address_line_1" type="string">
+  Main address.
+</ParamField>
+
+<ParamField body="address_line_2" type="string">
+  Main address, line 2.
+</ParamField>
+
+<ParamField body="postal_code" type="string">
+  Main address postal code.
+</ParamField>
+
+<ParamField body="city" type="string">
+  Main address city.
+</ParamField>
+
+<ParamField body="country" type="string">
+  Main address country, stored **verbatim**.
+</ParamField>
+
+<ParamField body="billing_address_line_1" type="string">
+  Billing address.
+</ParamField>
+
+<ParamField body="billing_address_line_2" type="string">
+  Billing address, line 2.
+</ParamField>
+
+<ParamField body="billing_postal_code" type="string">
+  Billing address postal code.
+</ParamField>
+
+<ParamField body="billing_city" type="string">
+  Billing address city.
+</ParamField>
+
+<ParamField body="billing_country" type="string">
+  Billing address country, stored **verbatim**.
+</ParamField>
+
+<ParamField body="accounting_account" type="string">
+  Accounting account code.
+</ParamField>
+
+<ParamField body="custom_<uuid>" type="any">
+  [Custom fields](/api-reference/webhooks/introduction#custom-fields) configured for your venue. An unknown custom field key is rejected with `400`.
+</ParamField>
+
+## Request
+
+<CodeGroup>
+
+```bash cURL
+curl -X PATCH https://api.bookingshake.io/api/accounts/account-123 \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "name": "Acme Corp", "vat_number": "FR98765432101" }'
+```
+
+```javascript Node.js
+const res = await fetch("https://api.bookingshake.io/api/accounts/account-123", {
+  method: "PATCH",
+  headers: {
+    Authorization: `Bearer ${process.env.BOOKINGSHAKE_API_KEY}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({ name: "Acme Corp", vat_number: "FR98765432101" }),
+});
+const { data: account } = await res.json();
+```
+
+```python Python
+import os, requests
+
+res = requests.patch(
+    "https://api.bookingshake.io/api/accounts/account-123",
+    headers={"Authorization": f"Bearer {os.environ['BOOKINGSHAKE_API_KEY']}"},
+    json={"name": "Acme Corp", "vat_number": "FR98765432101"},
+)
+account = res.json()["data"]
+```
+
+```php PHP
+<?php
+$ch = curl_init("https://api.bookingshake.io/api/accounts/account-123");
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PATCH");
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+    "name" => "Acme Corp",
+    "vat_number" => "FR98765432101",
+]));
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    "Authorization: Bearer " . getenv("BOOKINGSHAKE_API_KEY"),
+    "Content-Type: application/json",
+]);
+$account = json_decode(curl_exec($ch), true)["data"];
+curl_close($ch);
+```
+
+</CodeGroup>
+
+## Response
+
+The full account is returned in its **post-update** state, wrapped in the standard `{ message, data }` envelope — identical in shape to [`GET /accounts/{id}`](/api-reference/accounts).
+
+```json
+{
+  "message": "success",
+  "data": {
+    "id": "account-123",
+    "name": "Acme Corp",
+    "legal_name": "ACME CORPORATION SAS",
+    "company_type": "SAS",
+    "company_registration_id": "987654321",
+    "siret": "98765432100012",
+    "vat_number": "FR98765432101",
+    "rcs_number": "RCS Paris 987 654 321",
+    "sector": "Technology",
+    "address_line_1": "123 rue Example",
+    "address_line_2": "Bâtiment A",
+    "postal_code": "75001",
+    "city": "Paris",
+    "country": "France",
+    "billing_address_line_1": "123 rue Example",
+    "billing_address_line_2": null,
+    "billing_postal_code": "75001",
+    "billing_city": "Paris",
+    "billing_country": "France",
+    "accounting_account": "411000",
+    "created_at": 1731495000000,
+    "custom_u1v2w3x4y5": "50-100",
+    "custom_z6a7b8c9d0": null
+  }
+}
+```
+
+See the [Get an Account](/api-reference/accounts#data-fields) reference for the full field descriptions.
+
+## Errors
+
+| Status | Meaning |
+|--------|---------|
+| `400` | Missing/invalid token, missing account id, empty/invalid body, no updatable fields, a non-string value on a string field, a value over 255 characters, or an unknown custom field key |
+| `404` | Account not found — it does not exist, or belongs to another venue or venues group |
+| `429` | [Rate limit](/api-reference/rate-limiting) exceeded (30 requests/minute) |
+| `500` | Internal server error |
+
+<Note>
+  A `404` is returned uniformly whenever the account is outside your scope, so the existence of another venue's account is never disclosed.
+</Note>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Get an Account" icon="building" href="/api-reference/accounts">
+    Retrieve an account before updating it
+  </Card>
+
+  <Card title="Account Events" icon="building" href="/api-reference/webhooks/accounts">
+    Receive account changes in real time via the account.* webhooks
+  </Card>
+</CardGroup>

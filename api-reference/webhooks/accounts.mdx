@@ -41,6 +41,7 @@ Triggered when a new account (company) is added to your venue.
     "billing_postal_code": "75001",
     "billing_city": "Paris",
     "billing_country": "France",
+    "accounting_account": "411000",
     "created_at": 1731495000000
   }
 }
@@ -72,6 +73,7 @@ Triggered when account information is modified. Contains all account data after 
     "billing_postal_code": "75001",
     "billing_city": "Paris",
     "billing_country": "France",
+    "accounting_account": "411000",
     "created_at": 1731495000000
   }
 }
@@ -118,6 +120,7 @@ Triggered when an account is removed. Only includes the account ID.
 | `billing_postal_code` | string | Billing address postal code |
 | `billing_city` | string | Billing address city |
 | `billing_country` | string | Billing address country, verbatim as entered |
+| `accounting_account` | string | Accounting account code |
 | `created_at` | number | Creation timestamp, Unix milliseconds |
 | `custom_<uuid>` | any | [Custom fields](/api-reference/webhooks/introduction#custom-fields) configured for your venue |
 
