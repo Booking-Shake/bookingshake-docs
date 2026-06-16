@@ -1,0 +1,190 @@
+---
+title: "Get an Invoice"
+description: "Retrieve a single issued invoice by its document ID"
+icon: "file-invoice"
+---
+
+<Warning>
+  **Beta** — Invoice data is currently in beta. The payload structure may still evolve before general availability. Share your feedback at [support@bookingshake.com](mailto:support@bookingshake.com).
+</Warning>
+
+## Overview
+
+`GET /invoices/{id}` returns a single invoice by its document ID. The response payload is **identical** to the `data` block of the [`invoice.created`](/api-reference/webhooks/invoices) webhook — same fields, same conventions — so you can use it to back-fill a missed webhook, reconcile your accounting, or re-fetch a document on demand.
+
+The endpoint returns standard invoices, deposit invoices, balance invoices, and their credit notes. **Quotes are not exposed** by this endpoint.
+
+<Note>
+  Amounts are always integer **cents**, dates are `YYYY-MM-DD` strings in the `Europe/Paris` timezone, timestamps are Unix **milliseconds**, and missing values are explicit `null`. See the [invoice webhook reference](/api-reference/webhooks/invoices) for the full field-by-field definition.
+</Note>
+
+## Authentication
+
+All requests require a Bearer token (your BookingShake API key):
+
+```
+Authorization: Bearer YOUR_API_KEY
+```
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+  The invoice document ID — the `id` field carried by the `invoice.created` webhook.
+</ParamField>
+
+## Request
+
+<CodeGroup>
+
+```bash cURL
+curl https://api.bookingshake.io/api/invoices/file-789 \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+```javascript Node.js
+const res = await fetch("https://api.bookingshake.io/api/invoices/file-789", {
+  headers: { Authorization: `Bearer ${process.env.BOOKINGSHAKE_API_KEY}` },
+});
+const { data: invoice } = await res.json();
+```
+
+```python Python
+import os, requests
+
+res = requests.get(
+    "https://api.bookingshake.io/api/invoices/file-789",
+    headers={"Authorization": f"Bearer {os.environ['BOOKINGSHAKE_API_KEY']}"},
+)
+invoice = res.json()["data"]
+```
+
+```php PHP
+<?php
+$ch = curl_init("https://api.bookingshake.io/api/invoices/file-789");
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    "Authorization: Bearer " . getenv("BOOKINGSHAKE_API_KEY"),
+]);
+$invoice = json_decode(curl_exec($ch), true)["data"];
+curl_close($ch);
+```
+
+</CodeGroup>
+
+## Response
+
+The invoice is returned wrapped in the standard `{ message, data }` envelope. The `data` object follows the [Invoice schema](/api-reference/webhooks/invoices#data-fields).
+
+```json
+{
+  "message": "success",
+  "data": {
+    "id": "file-789",
+    "number": "FAC-2026-0042",
+    "type": "balance_invoice",
+    "type_code": 380,
+    "status": "ongoing",
+    "title": "Séminaire Acme — 12 juin 2026",
+    "language": "fr",
+    "currency": "EUR",
+    "created_at": 1749722400000,
+    "due_date": "2026-07-12",
+    "service_start_date": "2026-06-12",
+    "service_end_date": "2026-06-13",
+    "purchase_order_number": "PO-2026-1234",
+    "amount_excl_tax": 175000,
+    "amount_incl_tax": 210000,
+    "taxable_breakdown": { "20": 175000 },
+    "tax_breakdown": { "20": 35000 },
+    "global_discount_excl_tax": 0,
+    "lines": [
+      {
+        "description": "Location salle plénière",
+        "quantity": "1.00",
+        "unit": null,
+        "unit_price_excl_tax": 150000,
+        "discount": 0,
+        "tax_rate": "20.00",
+        "total_excl_tax": 150000
+      },
+      {
+        "description": "Forfait journée d'étude",
+        "quantity": "25.00",
+        "unit": null,
+        "unit_price_excl_tax": 4000,
+        "discount": 0,
+        "tax_rate": "20.00",
+        "total_excl_tax": 100000
+      },
+      {
+        "description": "Déduction acompte FAC-2026-0021 (TVA 20%)",
+        "quantity": "1.00",
+        "unit": null,
+        "unit_price_excl_tax": -75000,
+        "discount": 0,
+        "tax_rate": "20.00",
+        "total_excl_tax": -75000
+      }
+    ],
+    "booking_id": "booking-abc",
+    "quote_id": "quote-123",
+    "linked_invoice_id": null,
+    "deposit_invoices": [
+      {
+        "id": "file-456",
+        "number": "FAC-2026-0021",
+        "date": "2026-05-01",
+        "amount_incl_tax": 90000
+      }
+    ],
+    "account_id": "account-123",
+    "contact_id": "contact-456",
+    "seller": { "id": "venue123", "legal_name": "HOTEL EXAMPLE SAS", "...": "..." },
+    "account": { "id": "account-123", "name": "Acme Corp", "...": "..." },
+    "contact": { "id": "contact-456", "first_name": "John", "last_name": "Doe", "...": "..." },
+    "pdf_url": "https://storage.googleapis.com/.../FAC-2026-0042.pdf"
+  }
+}
+```
+
+### Key Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique invoice document ID |
+| `number` | string | Invoice number as printed on the PDF |
+| `type` / `type_code` | string / number | Document type and its UNTDID 1001 code (see [Invoice Types](/api-reference/webhooks/invoices#invoice-types)) |
+| `status` | string \| null | `ongoing`, `paid`, or `canceled` |
+| `amount_excl_tax` / `amount_incl_tax` | number | Document totals, in cents |
+| `lines` | array | Line items, self-consistent with the totals |
+| `deposit_invoices` | array | For balance invoices: prior deposits deducted |
+| `booking_id` | string \| null | Correlation key shared with [payment](/api-reference/webhooks/payments) and invoice events of the same booking |
+| `seller` / `account` / `contact` | object \| null | Frozen legal-mention snapshots captured at issue time |
+| `pdf_url` | string \| null | URL of the generated PDF |
+
+For the complete field reference (amounts, lines, snapshot blocks), see the [invoice webhook documentation](/api-reference/webhooks/invoices#data-fields) — the payloads are identical.
+
+## Errors
+
+| Status | Meaning |
+|--------|---------|
+| `400` | Missing/invalid token, or missing invoice id |
+| `404` | Invoice not found — it does not exist, belongs to another venue, or is not an invoice (e.g. a quote) |
+| `429` | [Rate limit](/api-reference/rate-limiting) exceeded (60 requests/minute) |
+| `500` | Internal server error |
+
+<Note>
+  A `404` is returned uniformly whenever the invoice is outside your scope, so the existence of another venue's invoice is never disclosed.
+</Note>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Invoice Events" icon="file-invoice" href="/api-reference/webhooks/invoices">
+    Receive invoices in real time via the invoice.created webhook
+  </Card>
+
+  <Card title="Payment Events" icon="credit-card" href="/api-reference/webhooks/payments">
+    Track payments tied to the same booking
+  </Card>
+</CardGroup>

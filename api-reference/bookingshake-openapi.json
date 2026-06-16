@@ -33,6 +33,14 @@
     {
       "name": "Fields",
       "description": "Retrieve available custom and default fields"
+    },
+    {
+      "name": "Invoices",
+      "description": "Retrieve issued invoices"
+    },
+    {
+      "name": "Payments",
+      "description": "Retrieve payments"
     }
   ],
   "paths": {
@@ -931,6 +939,305 @@
           }
         }
       }
+    },
+    "/invoices/{id}": {
+      "get": {
+        "summary": "Get an invoice",
+        "description": "Retrieve a single invoice by its document ID. The response payload is identical to the `data` block of the [invoice.created](/api-reference/webhooks/invoices) webhook (same fields, same conventions: amounts in integer cents, dates as `YYYY-MM-DD` in `Europe/Paris`, frozen seller/account/contact snapshots).\n\nReturns invoices, deposit invoices, balance invoices and their credit notes. Quotes are not exposed by this endpoint and return `404`.",
+        "operationId": "getInvoice",
+        "tags": ["Invoices"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Invoice document ID (the `id` field carried by the invoice.created webhook).",
+            "schema": { "type": "string" },
+            "example": "file-789"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoice retrieved successfully",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": { "type": "integer" },
+                "description": "Maximum requests allowed per minute (60 for this endpoint)"
+              },
+              "X-RateLimit-Remaining": {
+                "schema": { "type": "integer" },
+                "description": "Requests remaining in the current window"
+              },
+              "X-RateLimit-Reset": {
+                "schema": { "type": "integer" },
+                "description": "Unix timestamp when the rate limit resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "success" },
+                    "data": { "$ref": "#/components/schemas/Invoice" }
+                  }
+                },
+                "example": {
+                  "message": "success",
+                  "data": {
+                    "id": "file-789",
+                    "number": "FAC-2026-0042",
+                    "type": "balance_invoice",
+                    "type_code": 380,
+                    "status": "ongoing",
+                    "title": "Séminaire Acme — 12 juin 2026",
+                    "language": "fr",
+                    "currency": "EUR",
+                    "created_at": 1749722400000,
+                    "due_date": "2026-07-12",
+                    "service_start_date": "2026-06-12",
+                    "service_end_date": "2026-06-13",
+                    "purchase_order_number": "PO-2026-1234",
+                    "amount_excl_tax": 175000,
+                    "amount_incl_tax": 210000,
+                    "taxable_breakdown": { "20": 175000 },
+                    "tax_breakdown": { "20": 35000 },
+                    "global_discount_excl_tax": 0,
+                    "lines": [
+                      {
+                        "description": "Location salle plénière",
+                        "quantity": "1.00",
+                        "unit": null,
+                        "unit_price_excl_tax": 150000,
+                        "discount": 0,
+                        "tax_rate": "20.00",
+                        "total_excl_tax": 150000
+                      },
+                      {
+                        "description": "Forfait journée d'étude",
+                        "quantity": "25.00",
+                        "unit": null,
+                        "unit_price_excl_tax": 4000,
+                        "discount": 0,
+                        "tax_rate": "20.00",
+                        "total_excl_tax": 100000
+                      },
+                      {
+                        "description": "Déduction acompte FAC-2026-0021 (TVA 20%)",
+                        "quantity": "1.00",
+                        "unit": null,
+                        "unit_price_excl_tax": -75000,
+                        "discount": 0,
+                        "tax_rate": "20.00",
+                        "total_excl_tax": -75000
+                      }
+                    ],
+                    "booking_id": "booking-abc",
+                    "quote_id": "quote-123",
+                    "linked_invoice_id": null,
+                    "deposit_invoices": [
+                      {
+                        "id": "file-456",
+                        "number": "FAC-2026-0021",
+                        "date": "2026-05-01",
+                        "amount_incl_tax": 90000
+                      }
+                    ],
+                    "account_id": "account-123",
+                    "contact_id": "contact-456",
+                    "seller": {
+                      "id": "venue123",
+                      "legal_name": "HOTEL EXAMPLE SAS",
+                      "company_type": "SAS",
+                      "company_registration_id": "123456789",
+                      "vat_number": "FR12345678901",
+                      "share_capital": "10 000 €",
+                      "company_other_id": null,
+                      "address_line_1": "1 place de l'Example",
+                      "address_line_2": null,
+                      "postal_code": "75001",
+                      "city": "Paris",
+                      "country": "France",
+                      "iban": "FR7612345678901234567890123",
+                      "email": "billing@hotel-example.com",
+                      "country_code": "FR"
+                    },
+                    "account": {
+                      "id": "account-123",
+                      "name": "Acme Corp",
+                      "legal_name": "ACME CORPORATION SAS",
+                      "company_type": "SAS",
+                      "company_registration_id": "987654321",
+                      "siret": "98765432100012",
+                      "vat_number": "FR98765432101",
+                      "rcs_number": "RCS Paris 987 654 321",
+                      "address_line_1": "123 rue Example",
+                      "address_line_2": "Bâtiment A",
+                      "postal_code": "75001",
+                      "city": "Paris",
+                      "country": "France",
+                      "billing_address_line_1": "123 rue Example",
+                      "billing_address_line_2": null,
+                      "billing_postal_code": "75001",
+                      "billing_city": "Paris",
+                      "billing_country": "France",
+                      "country_code": "FR",
+                      "billing_country_code": "FR",
+                      "peppol_id": "0009:987654321"
+                    },
+                    "contact": {
+                      "id": "contact-456",
+                      "first_name": "John",
+                      "last_name": "Doe",
+                      "email": "john.doe@example.com",
+                      "phone": "+33612345678",
+                      "landline_phone": null,
+                      "title": "Mr",
+                      "position": "CEO",
+                      "company": "Acme Corp",
+                      "address_line_1": null,
+                      "address_line_2": null,
+                      "postal_code": null,
+                      "city": null,
+                      "country": null,
+                      "country_code": null
+                    },
+                    "pdf_url": "https://storage.googleapis.com/.../FAC-2026-0042.pdf"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid token or missing invoice id",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "message": "invalid token" }
+              }
+            }
+          },
+          "404": {
+            "description": "Invoice not found. Returned when the invoice does not exist, belongs to another venue, or is not an invoice (e.g. a quote).",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "message": "not found" }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitExceeded"
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "message": "error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/{id}": {
+      "get": {
+        "summary": "Get a payment",
+        "description": "Retrieve a single payment by its document ID. The response payload is identical to the `data` block of the [payment.*](/api-reference/webhooks/payments) webhooks (same fields, same conventions: amount in integer cents, dates as `YYYY-MM-DD` in `Europe/Paris`, `method` verbatim).\n\nSecurity deposits (holds) are out of scope and return `404`, consistent with the webhooks.",
+        "operationId": "getPayment",
+        "tags": ["Payments"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Payment document ID (the `id` field carried by the payment.* webhooks).",
+            "schema": { "type": "string" },
+            "example": "payment-789"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payment retrieved successfully",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": { "type": "integer" },
+                "description": "Maximum requests allowed per minute (60 for this endpoint)"
+              },
+              "X-RateLimit-Remaining": {
+                "schema": { "type": "integer" },
+                "description": "Requests remaining in the current window"
+              },
+              "X-RateLimit-Reset": {
+                "schema": { "type": "integer" },
+                "description": "Unix timestamp when the rate limit resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "success" },
+                    "data": { "$ref": "#/components/schemas/Payment" }
+                  }
+                },
+                "example": {
+                  "message": "success",
+                  "data": {
+                    "id": "payment-789",
+                    "amount": 90000,
+                    "status": "paid",
+                    "name": "Acompte 30%",
+                    "method": "Virement bancaire",
+                    "received_date": "2026-06-10",
+                    "due_date": "2026-06-15",
+                    "created_at": 1749549600000,
+                    "updated_at": 1749722400000,
+                    "invoice_id": "file-456",
+                    "invoice_number": "FAC-2026-0021",
+                    "quote_id": "quote-123",
+                    "booking_id": "booking-abc"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid token or missing payment id",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "message": "invalid token" }
+              }
+            }
+          },
+          "404": {
+            "description": "Payment not found. Returned when the payment does not exist, belongs to another venue, or is a security deposit (hold).",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "message": "not found" }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitExceeded"
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "message": "error" }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1427,6 +1734,156 @@
               }
             }
           }
+        }
+      },
+      "Invoice": {
+        "type": "object",
+        "description": "An issued invoice. Identical to the `data` block of the invoice.created webhook. All amounts are integer cents; dates are `YYYY-MM-DD` strings in the `Europe/Paris` timezone; missing values are explicit `null`.",
+        "properties": {
+          "id": { "type": "string", "description": "Unique invoice document ID" },
+          "number": { "type": "string", "description": "Invoice number as printed on the PDF" },
+          "type": {
+            "type": "string",
+            "description": "Document type",
+            "enum": ["invoice", "deposit_invoice", "balance_invoice", "credit_note", "deposit_credit_note", "balance_credit_note"]
+          },
+          "type_code": { "type": "integer", "description": "UNTDID 1001 document type code (380, 386, or 381)" },
+          "status": { "type": "string", "nullable": true, "enum": ["ongoing", "paid", "canceled"] },
+          "title": { "type": "string", "nullable": true, "description": "Title of the related booking" },
+          "language": { "type": "string", "nullable": true, "description": "Language the document was issued in (e.g. fr, en)" },
+          "currency": { "type": "string", "description": "Always EUR" },
+          "created_at": { "type": "integer", "nullable": true, "description": "Issue timestamp, Unix milliseconds" },
+          "due_date": { "type": "string", "nullable": true, "description": "Payment due date, YYYY-MM-DD" },
+          "service_start_date": { "type": "string", "nullable": true, "description": "Start of the service period, YYYY-MM-DD" },
+          "service_end_date": { "type": "string", "nullable": true, "description": "End of the service period, YYYY-MM-DD" },
+          "purchase_order_number": { "type": "string", "nullable": true, "description": "Buyer's purchase order reference" },
+          "amount_excl_tax": { "type": "integer", "description": "Total excluding tax of this document, in cents" },
+          "amount_incl_tax": { "type": "integer", "description": "Total including tax of this document, in cents" },
+          "taxable_breakdown": { "type": "object", "additionalProperties": { "type": "integer" }, "description": "Taxable base per VAT rate (key = rate in %, value = cents)" },
+          "tax_breakdown": { "type": "object", "additionalProperties": { "type": "integer" }, "description": "Tax amount per VAT rate (key = rate in %, value = cents)" },
+          "global_discount_excl_tax": { "type": "integer", "description": "Global discount excluding tax, in cents (not distributed into lines, EN 16931 BG-20)" },
+          "lines": { "type": "array", "items": { "$ref": "#/components/schemas/InvoiceLine" } },
+          "booking_id": { "type": "string", "nullable": true, "description": "Opaque correlation key of the booking, shared by all invoices and payments of the same booking" },
+          "quote_id": { "type": "string", "nullable": true, "description": "ID of the quote this invoice was generated from" },
+          "linked_invoice_id": { "type": "string", "nullable": true, "description": "For credit notes: ID of the corrected invoice" },
+          "deposit_invoices": { "type": "array", "items": { "$ref": "#/components/schemas/DepositInvoice" }, "description": "For balance invoices: prior deposit invoices deducted" },
+          "account_id": { "type": "string", "nullable": true, "description": "ID of the buyer account (company)" },
+          "contact_id": { "type": "string", "nullable": true, "description": "ID of the buyer contact" },
+          "seller": { "allOf": [{ "$ref": "#/components/schemas/InvoiceSeller" }], "nullable": true },
+          "account": { "allOf": [{ "$ref": "#/components/schemas/InvoiceAccount" }], "nullable": true },
+          "contact": { "allOf": [{ "$ref": "#/components/schemas/InvoiceContact" }], "nullable": true },
+          "pdf_url": { "type": "string", "nullable": true, "description": "URL of the generated PDF document" }
+        }
+      },
+      "InvoiceLine": {
+        "type": "object",
+        "description": "Invoice line item as printed on the PDF. sum(lines[].total_excl_tax) - global_discount_excl_tax = amount_excl_tax (within rounding).",
+        "properties": {
+          "description": { "type": "string", "description": "Line label" },
+          "quantity": { "type": "string", "description": "Decimal string (e.g. \"25.00\")" },
+          "unit": { "type": "string", "nullable": true, "description": "Unit of measure when applicable (e.g. day for accommodation lines)" },
+          "unit_price_excl_tax": { "type": "integer", "description": "Unit price excluding tax, in cents, before discount" },
+          "discount": { "type": "integer", "description": "Total line discount, in cents (0 if none)" },
+          "tax_rate": { "type": "string", "description": "VAT rate as decimal string (e.g. \"20.00\")" },
+          "total_excl_tax": { "type": "integer", "description": "Line net amount in cents (can be negative on balance-invoice deduction lines)" }
+        }
+      },
+      "DepositInvoice": {
+        "type": "object",
+        "description": "A prior deposit invoice deducted from a balance invoice.",
+        "properties": {
+          "id": { "type": "string" },
+          "number": { "type": "string" },
+          "date": { "type": "string", "description": "YYYY-MM-DD" },
+          "amount_incl_tax": { "type": "integer", "description": "In cents" }
+        }
+      },
+      "InvoiceSeller": {
+        "type": "object",
+        "description": "Frozen snapshot of the seller (your venue) at issue time. peppol_id is the only field read live.",
+        "properties": {
+          "id": { "type": "string", "nullable": true },
+          "legal_name": { "type": "string", "nullable": true },
+          "company_type": { "type": "string", "nullable": true },
+          "company_registration_id": { "type": "string", "nullable": true, "description": "SIREN" },
+          "vat_number": { "type": "string", "nullable": true },
+          "share_capital": { "type": "string", "nullable": true, "description": "Share capital legal mention, verbatim" },
+          "company_other_id": { "type": "string", "nullable": true },
+          "address_line_1": { "type": "string", "nullable": true },
+          "address_line_2": { "type": "string", "nullable": true },
+          "postal_code": { "type": "string", "nullable": true },
+          "city": { "type": "string", "nullable": true },
+          "country": { "type": "string", "nullable": true, "description": "Verbatim as entered" },
+          "country_code": { "type": "string", "nullable": true, "description": "ISO 3166-1 alpha-2, or null if unresolved" },
+          "iban": { "type": "string", "nullable": true },
+          "email": { "type": "string", "nullable": true }
+        }
+      },
+      "InvoiceAccount": {
+        "type": "object",
+        "description": "Frozen snapshot of the buyer account (company) at issue time. peppol_id is read live.",
+        "properties": {
+          "id": { "type": "string", "nullable": true },
+          "name": { "type": "string", "nullable": true },
+          "legal_name": { "type": "string", "nullable": true },
+          "company_type": { "type": "string", "nullable": true },
+          "company_registration_id": { "type": "string", "nullable": true, "description": "SIREN" },
+          "siret": { "type": "string", "nullable": true },
+          "vat_number": { "type": "string", "nullable": true },
+          "rcs_number": { "type": "string", "nullable": true },
+          "address_line_1": { "type": "string", "nullable": true },
+          "address_line_2": { "type": "string", "nullable": true },
+          "postal_code": { "type": "string", "nullable": true },
+          "city": { "type": "string", "nullable": true },
+          "country": { "type": "string", "nullable": true },
+          "country_code": { "type": "string", "nullable": true, "description": "ISO 3166-1 alpha-2" },
+          "billing_address_line_1": { "type": "string", "nullable": true },
+          "billing_address_line_2": { "type": "string", "nullable": true },
+          "billing_postal_code": { "type": "string", "nullable": true },
+          "billing_city": { "type": "string", "nullable": true },
+          "billing_country": { "type": "string", "nullable": true },
+          "billing_country_code": { "type": "string", "nullable": true, "description": "ISO 3166-1 alpha-2 for the billing country" },
+          "peppol_id": { "type": "string", "nullable": true, "description": "Peppol participant ID for e-invoicing routing, read live" }
+        }
+      },
+      "InvoiceContact": {
+        "type": "object",
+        "description": "Frozen snapshot of the buyer contact at issue time.",
+        "properties": {
+          "id": { "type": "string", "nullable": true },
+          "first_name": { "type": "string", "nullable": true },
+          "last_name": { "type": "string", "nullable": true },
+          "email": { "type": "string", "nullable": true },
+          "phone": { "type": "string", "nullable": true },
+          "landline_phone": { "type": "string", "nullable": true },
+          "title": { "type": "string", "nullable": true },
+          "position": { "type": "string", "nullable": true },
+          "company": { "type": "string", "nullable": true },
+          "address_line_1": { "type": "string", "nullable": true },
+          "address_line_2": { "type": "string", "nullable": true },
+          "postal_code": { "type": "string", "nullable": true },
+          "city": { "type": "string", "nullable": true },
+          "country": { "type": "string", "nullable": true },
+          "country_code": { "type": "string", "nullable": true, "description": "ISO 3166-1 alpha-2" }
+        }
+      },
+      "Payment": {
+        "type": "object",
+        "description": "A payment. Identical to the `data` block of the payment.* webhooks. Amount is integer cents; dates are `YYYY-MM-DD` strings in the `Europe/Paris` timezone; timestamps are Unix milliseconds; missing values are explicit `null`.",
+        "properties": {
+          "id": { "type": "string", "description": "Unique payment ID" },
+          "amount": { "type": "integer", "nullable": true, "description": "Amount in integer cents" },
+          "status": { "type": "string", "nullable": true, "enum": ["waiting", "paid", "canceled"] },
+          "name": { "type": "string", "nullable": true, "description": "Payment label as entered by the user" },
+          "method": { "type": "string", "nullable": true, "description": "Payment method, verbatim label (not a normalized enum); appears in the venue locale language. Do not build logic on exact values." },
+          "received_date": { "type": "string", "nullable": true, "description": "Date the payment was received, YYYY-MM-DD" },
+          "due_date": { "type": "string", "nullable": true, "description": "Date the payment is expected, YYYY-MM-DD" },
+          "created_at": { "type": "integer", "nullable": true, "description": "Creation timestamp, Unix milliseconds" },
+          "updated_at": { "type": "integer", "nullable": true, "description": "Last update timestamp, Unix milliseconds" },
+          "invoice_id": { "type": "string", "nullable": true, "description": "ID of the linked invoice (matches the invoice document id)" },
+          "invoice_number": { "type": "string", "nullable": true, "description": "Number of the linked invoice, denormalized for convenience" },
+          "quote_id": { "type": "string", "nullable": true, "description": "ID of the linked quote" },
+          "booking_id": { "type": "string", "nullable": true, "description": "Opaque correlation key of the booking, shared by all payments and invoices of the same booking" }
         }
       }
     },

@@ -1,0 +1,140 @@
+---
+title: "Get a Payment"
+description: "Retrieve a single payment by its document ID"
+icon: "credit-card"
+---
+
+<Warning>
+  **Beta** — Payment data is currently in beta. The payload structure may still evolve before general availability. Share your feedback at [support@bookingshake.com](mailto:support@bookingshake.com).
+</Warning>
+
+## Overview
+
+`GET /payments/{id}` returns a single payment by its document ID. The response payload is **identical** to the `data` block of the [`payment.*`](/api-reference/webhooks/payments) webhooks — same fields, same conventions — so you can use it to back-fill a missed webhook or reconcile a payment on demand.
+
+<Note>
+  **Security deposits (holds) are out of scope** and return `404`, consistent with the payment webhooks (which never emit for holds). Amounts are integer **cents**, dates are `YYYY-MM-DD` strings in the `Europe/Paris` timezone, timestamps are Unix **milliseconds**, and missing values are explicit `null`.
+</Note>
+
+## Authentication
+
+All requests require a Bearer token (your BookingShake API key):
+
+```
+Authorization: Bearer YOUR_API_KEY
+```
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+  The payment document ID — the `id` field carried by the `payment.*` webhooks.
+</ParamField>
+
+## Request
+
+<CodeGroup>
+
+```bash cURL
+curl https://api.bookingshake.io/api/payments/payment-789 \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+```javascript Node.js
+const res = await fetch("https://api.bookingshake.io/api/payments/payment-789", {
+  headers: { Authorization: `Bearer ${process.env.BOOKINGSHAKE_API_KEY}` },
+});
+const { data: payment } = await res.json();
+```
+
+```python Python
+import os, requests
+
+res = requests.get(
+    "https://api.bookingshake.io/api/payments/payment-789",
+    headers={"Authorization": f"Bearer {os.environ['BOOKINGSHAKE_API_KEY']}"},
+)
+payment = res.json()["data"]
+```
+
+```php PHP
+<?php
+$ch = curl_init("https://api.bookingshake.io/api/payments/payment-789");
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    "Authorization: Bearer " . getenv("BOOKINGSHAKE_API_KEY"),
+]);
+$payment = json_decode(curl_exec($ch), true)["data"];
+curl_close($ch);
+```
+
+</CodeGroup>
+
+## Response
+
+The payment is returned wrapped in the standard `{ message, data }` envelope.
+
+```json
+{
+  "message": "success",
+  "data": {
+    "id": "payment-789",
+    "amount": 90000,
+    "status": "paid",
+    "name": "Acompte 30%",
+    "method": "Virement bancaire",
+    "received_date": "2026-06-10",
+    "due_date": "2026-06-15",
+    "created_at": 1749549600000,
+    "updated_at": 1749722400000,
+    "invoice_id": "file-456",
+    "invoice_number": "FAC-2026-0021",
+    "quote_id": "quote-123",
+    "booking_id": "booking-abc"
+  }
+}
+```
+
+### Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique payment ID |
+| `amount` | number \| null | Amount in integer cents |
+| `status` | string \| null | `waiting`, `paid`, or `canceled` |
+| `name` | string \| null | Payment label as entered by the user |
+| `method` | string \| null | Payment method, **verbatim** label (not a normalized enum) — appears in the venue locale language. Do not build logic on exact values |
+| `received_date` | string \| null | Date the payment was received, `YYYY-MM-DD` |
+| `due_date` | string \| null | Date the payment is expected, `YYYY-MM-DD` |
+| `created_at` | number \| null | Creation timestamp, Unix milliseconds |
+| `updated_at` | number \| null | Last update timestamp, Unix milliseconds |
+| `invoice_id` | string \| null | ID of the linked invoice — matches the `id` of [`GET /invoices/{id}`](/api-reference/invoices) |
+| `invoice_number` | string \| null | Number of the linked invoice, denormalized for convenience |
+| `quote_id` | string \| null | ID of the linked quote |
+| `booking_id` | string \| null | Correlation key shared with [invoice](/api-reference/webhooks/invoices) and payment events of the same booking |
+
+See the [payment webhook documentation](/api-reference/webhooks/payments#data-fields) for the full field reference — the payloads are identical.
+
+## Errors
+
+| Status | Meaning |
+|--------|---------|
+| `400` | Missing/invalid token, or missing payment id |
+| `404` | Payment not found — it does not exist, belongs to another venue, or is a security deposit (hold) |
+| `429` | [Rate limit](/api-reference/rate-limiting) exceeded (60 requests/minute) |
+| `500` | Internal server error |
+
+<Note>
+  A `404` is returned uniformly whenever the payment is outside your scope, so the existence of another venue's payment is never disclosed.
+</Note>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Get an Invoice" icon="file-invoice" href="/api-reference/invoices">
+    Retrieve the invoice linked to a payment via invoice_id
+  </Card>
+
+  <Card title="Payment Events" icon="credit-card" href="/api-reference/webhooks/payments">
+    Receive payments in real time via the payment.* webhooks
+  </Card>
+</CardGroup>
