@@ -41,6 +41,10 @@
     {
       "name": "Payments",
       "description": "Retrieve payments"
+    },
+    {
+      "name": "Contacts",
+      "description": "Retrieve contacts (people)"
     }
   ],
   "paths": {
@@ -940,6 +944,213 @@
         }
       }
     },
+    "/accounts/{id}": {
+      "get": {
+        "summary": "Get an account",
+        "description": "Retrieve a single account (company) by its ID.\n\nUseful to back-fill a missed account.* webhook, reconcile your CRM, or re-fetch a company on demand. Unlike the account webhook (which omits empty fields), every field is always present with an explicit `null` when unset. Country fields are verbatim as entered.",
+        "operationId": "getAccount",
+        "tags": ["Accounts"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Account ID (the `id` field carried by the account.created webhook).",
+            "schema": { "type": "string" },
+            "example": "account-123"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Account retrieved successfully",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": { "type": "integer" },
+                "description": "Maximum requests allowed per minute (60 for this endpoint)"
+              },
+              "X-RateLimit-Remaining": {
+                "schema": { "type": "integer" },
+                "description": "Requests remaining in the current window"
+              },
+              "X-RateLimit-Reset": {
+                "schema": { "type": "integer" },
+                "description": "Unix timestamp when the rate limit resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "success" },
+                    "data": { "$ref": "#/components/schemas/Account" }
+                  }
+                },
+                "example": {
+                  "message": "success",
+                  "data": {
+                    "id": "account-123",
+                    "name": "Acme Corp",
+                    "legal_name": "ACME CORPORATION SAS",
+                    "company_type": "SAS",
+                    "company_registration_id": "987654321",
+                    "siret": "98765432100012",
+                    "vat_number": "FR98765432101",
+                    "rcs_number": "RCS Paris 987 654 321",
+                    "sector": "Technology",
+                    "address_line_1": "123 rue Example",
+                    "address_line_2": "Bâtiment A",
+                    "postal_code": "75001",
+                    "city": "Paris",
+                    "country": "France",
+                    "billing_address_line_1": "123 rue Example",
+                    "billing_address_line_2": null,
+                    "billing_postal_code": "75001",
+                    "billing_city": "Paris",
+                    "billing_country": "France",
+                    "created_at": 1731495000000,
+                    "custom_u1v2w3x4y5": "50-100",
+                    "custom_z6a7b8c9d0": null
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid token or missing account id",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "message": "invalid token" }
+              }
+            }
+          },
+          "404": {
+            "description": "Account not found. Returned when the account does not exist, or belongs to another venue or venues group.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "message": "not found" }
+              }
+            }
+          },
+          "429": { "$ref": "#/components/responses/RateLimitExceeded" },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "message": "error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/contacts/{id}": {
+      "get": {
+        "summary": "Get a contact",
+        "description": "Retrieve a single contact (person) by its ID.\n\nUseful to back-fill a missed contact.* webhook, reconcile your CRM, or re-fetch a person on demand. Unlike the contact webhook (which omits empty fields), every field is always present with an explicit `null` when unset. The `country` field is verbatim as entered. `account_id` is the raw ID of the linked account (or `null`).",
+        "operationId": "getContact",
+        "tags": ["Contacts"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Contact ID (the `id` field carried by the contact.created webhook).",
+            "schema": { "type": "string" },
+            "example": "contact-456"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contact retrieved successfully",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": { "type": "integer" },
+                "description": "Maximum requests allowed per minute (60 for this endpoint)"
+              },
+              "X-RateLimit-Remaining": {
+                "schema": { "type": "integer" },
+                "description": "Requests remaining in the current window"
+              },
+              "X-RateLimit-Reset": {
+                "schema": { "type": "integer" },
+                "description": "Unix timestamp when the rate limit resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "success" },
+                    "data": { "$ref": "#/components/schemas/ContactResource" }
+                  }
+                },
+                "example": {
+                  "message": "success",
+                  "data": {
+                    "id": "contact-456",
+                    "first_name": "John",
+                    "last_name": "Doe",
+                    "email": "john.doe@example.com",
+                    "phone": "+33612345678",
+                    "landline_phone": "+33145678901",
+                    "title": "CEO",
+                    "position": "Head of Events",
+                    "avatar": null,
+                    "comments": null,
+                    "account_id": "account-123",
+                    "optin_marketing": true,
+                    "optin_general": false,
+                    "address_line_1": "10 rue Example",
+                    "address_line_2": null,
+                    "postal_code": "75001",
+                    "city": "Paris",
+                    "country": "France",
+                    "created_at": 1731493800000,
+                    "custom_u1v2w3x4y5": "VIP",
+                    "custom_z6a7b8c9d0": null
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid token or missing contact id",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "message": "invalid token" }
+              }
+            }
+          },
+          "404": {
+            "description": "Contact not found. Returned when the contact does not exist, or belongs to another venue or venues group.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "message": "not found" }
+              }
+            }
+          },
+          "429": { "$ref": "#/components/responses/RateLimitExceeded" },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "message": "error" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/invoices/{id}": {
       "get": {
         "summary": "Get an invoice",
@@ -1735,6 +1946,59 @@
             }
           }
         }
+      },
+      "Account": {
+        "type": "object",
+        "description": "An account (company) attached to your venue. Every field is present with an explicit `null` when unset. Country fields are verbatim as entered. Custom fields (`custom_<uuid>`) configured for your venue are included, also with explicit `null` when unset.",
+        "properties": {
+          "id": { "type": "string", "description": "Unique account ID" },
+          "name": { "type": "string", "nullable": true, "description": "Company display name" },
+          "legal_name": { "type": "string", "nullable": true, "description": "Registered legal name" },
+          "company_type": { "type": "string", "nullable": true, "description": "Legal form (e.g. SAS, SARL)" },
+          "company_registration_id": { "type": "string", "nullable": true, "description": "Company registration number (SIREN in France)" },
+          "siret": { "type": "string", "nullable": true, "description": "SIRET number (France)" },
+          "vat_number": { "type": "string", "nullable": true, "description": "VAT number" },
+          "rcs_number": { "type": "string", "nullable": true, "description": "Trade register number (RCS)" },
+          "sector": { "type": "string", "nullable": true, "description": "Business sector" },
+          "address_line_1": { "type": "string", "nullable": true, "description": "Main address" },
+          "address_line_2": { "type": "string", "nullable": true, "description": "Main address, line 2" },
+          "postal_code": { "type": "string", "nullable": true, "description": "Main address postal code" },
+          "city": { "type": "string", "nullable": true, "description": "Main address city" },
+          "country": { "type": "string", "nullable": true, "description": "Main address country, verbatim as entered" },
+          "billing_address_line_1": { "type": "string", "nullable": true, "description": "Billing address" },
+          "billing_address_line_2": { "type": "string", "nullable": true, "description": "Billing address, line 2" },
+          "billing_postal_code": { "type": "string", "nullable": true, "description": "Billing address postal code" },
+          "billing_city": { "type": "string", "nullable": true, "description": "Billing address city" },
+          "billing_country": { "type": "string", "nullable": true, "description": "Billing address country, verbatim as entered" },
+          "created_at": { "type": "integer", "format": "int64", "nullable": true, "description": "Creation timestamp, Unix milliseconds" }
+        },
+        "additionalProperties": { "description": "Custom fields (custom_<uuid>) configured for your venue, with explicit null when unset" }
+      },
+      "ContactResource": {
+        "type": "object",
+        "description": "A contact (person) attached to your venue, optionally linked to an account. Every field is present with an explicit `null` when unset. The `country` field is verbatim as entered. `account_id` is the raw ID of the linked account (or `null`). Custom fields (`custom_<uuid>`) configured for your venue are included, also with explicit `null` when unset.",
+        "properties": {
+          "id": { "type": "string", "description": "Unique contact ID" },
+          "first_name": { "type": "string", "nullable": true, "description": "First name" },
+          "last_name": { "type": "string", "nullable": true, "description": "Last name" },
+          "email": { "type": "string", "nullable": true, "description": "Email address" },
+          "phone": { "type": "string", "nullable": true, "description": "Mobile phone number" },
+          "landline_phone": { "type": "string", "nullable": true, "description": "Landline phone number" },
+          "title": { "type": "string", "nullable": true, "description": "Contact's title" },
+          "position": { "type": "string", "nullable": true, "description": "Job position" },
+          "avatar": { "type": "string", "nullable": true, "description": "Avatar image URL" },
+          "comments": { "type": "string", "nullable": true, "description": "Free-text notes about the contact" },
+          "account_id": { "type": "string", "nullable": true, "description": "ID of the account (company) this contact belongs to" },
+          "optin_marketing": { "type": "boolean", "nullable": true, "description": "Marketing communications opt-in" },
+          "optin_general": { "type": "boolean", "nullable": true, "description": "General communications opt-in" },
+          "address_line_1": { "type": "string", "nullable": true, "description": "Address" },
+          "address_line_2": { "type": "string", "nullable": true, "description": "Address, line 2" },
+          "postal_code": { "type": "string", "nullable": true, "description": "Postal code" },
+          "city": { "type": "string", "nullable": true, "description": "City" },
+          "country": { "type": "string", "nullable": true, "description": "Country, verbatim as entered" },
+          "created_at": { "type": "integer", "format": "int64", "nullable": true, "description": "Creation timestamp, Unix milliseconds" }
+        },
+        "additionalProperties": { "description": "Custom fields (custom_<uuid>) configured for your venue, with explicit null when unset" }
       },
       "Invoice": {
         "type": "object",

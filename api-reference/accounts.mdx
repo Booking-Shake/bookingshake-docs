@@ -1,0 +1,155 @@
+---
+title: "Get an Account"
+description: "Retrieve a single account (company) by its ID"
+icon: "building"
+---
+
+<Warning>
+  **Beta** — Account data is currently in beta. The payload structure may still evolve before general availability. Share your feedback at [support@bookingshake.com](mailto:support@bookingshake.com).
+</Warning>
+
+## Overview
+
+`GET /accounts/{id}` returns a single account (company) by its ID — useful to back-fill a missed `account.*` webhook, reconcile your CRM, or re-fetch a company on demand.
+
+<Note>
+  Unlike the [account webhook](/api-reference/webhooks/accounts) — which **omits** fields without a value — this endpoint always returns every field with an explicit `null` when unset (consistent with [GET /invoices](/api-reference/invoices) and [GET /payments](/api-reference/payments)). Country fields (`country`, `billing_country`) are returned **verbatim** as entered. Custom fields configured for your venue are included, also with explicit `null` when unset. Timestamps are Unix **milliseconds**.
+</Note>
+
+## Authentication
+
+All requests require a Bearer token (your BookingShake API key):
+
+```
+Authorization: Bearer YOUR_API_KEY
+```
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+  The account ID — the `id` field carried by the `account.created` webhook.
+</ParamField>
+
+## Request
+
+<CodeGroup>
+
+```bash cURL
+curl https://api.bookingshake.io/api/accounts/account-123 \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+```javascript Node.js
+const res = await fetch("https://api.bookingshake.io/api/accounts/account-123", {
+  headers: { Authorization: `Bearer ${process.env.BOOKINGSHAKE_API_KEY}` },
+});
+const { data: account } = await res.json();
+```
+
+```python Python
+import os, requests
+
+res = requests.get(
+    "https://api.bookingshake.io/api/accounts/account-123",
+    headers={"Authorization": f"Bearer {os.environ['BOOKINGSHAKE_API_KEY']}"},
+)
+account = res.json()["data"]
+```
+
+```php PHP
+<?php
+$ch = curl_init("https://api.bookingshake.io/api/accounts/account-123");
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    "Authorization: Bearer " . getenv("BOOKINGSHAKE_API_KEY"),
+]);
+$account = json_decode(curl_exec($ch), true)["data"];
+curl_close($ch);
+```
+
+</CodeGroup>
+
+## Response
+
+The account is returned wrapped in the standard `{ message, data }` envelope.
+
+```json
+{
+  "message": "success",
+  "data": {
+    "id": "account-123",
+    "name": "Acme Corp",
+    "legal_name": "ACME CORPORATION SAS",
+    "company_type": "SAS",
+    "company_registration_id": "987654321",
+    "siret": "98765432100012",
+    "vat_number": "FR98765432101",
+    "rcs_number": "RCS Paris 987 654 321",
+    "sector": "Technology",
+    "address_line_1": "123 rue Example",
+    "address_line_2": "Bâtiment A",
+    "postal_code": "75001",
+    "city": "Paris",
+    "country": "France",
+    "billing_address_line_1": "123 rue Example",
+    "billing_address_line_2": null,
+    "billing_postal_code": "75001",
+    "billing_city": "Paris",
+    "billing_country": "France",
+    "created_at": 1731495000000,
+    "custom_u1v2w3x4y5": "50-100",
+    "custom_z6a7b8c9d0": null
+  }
+}
+```
+
+## Data Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique account ID |
+| `name` | string \| null | Company display name |
+| `legal_name` | string \| null | Registered legal name |
+| `company_type` | string \| null | Legal form (e.g., `SAS`, `SARL`) |
+| `company_registration_id` | string \| null | Company registration number (SIREN in France) |
+| `siret` | string \| null | SIRET number (France) |
+| `vat_number` | string \| null | VAT number |
+| `rcs_number` | string \| null | Trade register number (RCS) |
+| `sector` | string \| null | Business sector |
+| `address_line_1` | string \| null | Main address |
+| `address_line_2` | string \| null | Main address, line 2 |
+| `postal_code` | string \| null | Main address postal code |
+| `city` | string \| null | Main address city |
+| `country` | string \| null | Main address country, verbatim as entered |
+| `billing_address_line_1` | string \| null | Billing address |
+| `billing_address_line_2` | string \| null | Billing address, line 2 |
+| `billing_postal_code` | string \| null | Billing address postal code |
+| `billing_city` | string \| null | Billing address city |
+| `billing_country` | string \| null | Billing address country, verbatim as entered |
+| `created_at` | number \| null | Creation timestamp, Unix milliseconds |
+| `custom_<uuid>` | any \| null | [Custom fields](/api-reference/webhooks/introduction#custom-fields) configured for your venue |
+
+## Errors
+
+| Status | Meaning |
+|--------|---------|
+| `400` | Missing/invalid token, or missing account id |
+| `404` | Account not found — it does not exist, or belongs to another venue or venues group |
+| `429` | [Rate limit](/api-reference/rate-limiting) exceeded (60 requests/minute) |
+| `500` | Internal server error |
+
+<Note>
+  A `404` is returned uniformly whenever the account is outside your scope, so the existence of another venue's account is never disclosed.
+</Note>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Account Events" icon="building" href="/api-reference/webhooks/accounts">
+    Receive account changes in real time via the account.* webhooks
+  </Card>
+
+  <Card title="Contact Events" icon="user" href="/api-reference/webhooks/contacts">
+    Track the people attached to your accounts
+  </Card>
+</CardGroup>

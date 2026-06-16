@@ -36,6 +36,8 @@
 					{
 						"group": "REST API",
 						"pages": [
+							"api-reference/accounts",
+							"api-reference/contacts",
 							"api-reference/invoices",
 							"api-reference/payments"
 						]
@@ -71,6 +73,18 @@
 						"group": "Fields",
 						"pages": [
 							"GET /fields"
+						]
+					},
+					{
+						"group": "Accounts",
+						"pages": [
+							"GET /accounts/{id}"
+						]
+					},
+					{
+						"group": "Contacts",
+						"pages": [
+							"GET /contacts/{id}"
 						]
 					},
 					{
