@@ -5,14 +5,14 @@ icon: "pen-to-square"
 ---
 
 <Warning>
-  **Beta** — Payment data is currently in beta. The payload structure may still evolve before general availability. Share your feedback at [support@bookingshake.com](mailto:support@bookingshake.com).
+  **Beta** - Payment data is currently in beta. The payload structure may still evolve before general availability. Share your feedback at [support@bookingshake.com](mailto:support@bookingshake.com).
 </Warning>
 
 ## Overview
 
 `PATCH /payments/{id}` updates a single payment by its document ID. It is a **partial** update: only the fields you include in the body are modified, everything else is left untouched.
 
-The request body uses the **same conventions as the response** — `amount` in integer cents, dates as `YYYY-MM-DD` (interpreted in the `Europe/Paris` timezone), and `status` verbatim. So you can read a payment with [`GET /payments/{id}`](/api-reference/payments), change a few fields, and send them straight back.
+The request body uses the **same conventions as the response** - `amount` in integer cents, dates as `YYYY-MM-DD` (interpreted in the `Europe/Paris` timezone), and `status` verbatim. So you can read a payment with [`GET /payments/{id}`](/api-reference/payments), change a few fields, and send them straight back.
 
 <Note>
   Updating a payment automatically emits the [`payment.updated`](/api-reference/webhooks/payments) webhook when at least one exposed field changes. **Security deposits (holds) are out of scope** and return `404`, consistent with the payment webhooks.
@@ -29,7 +29,7 @@ Authorization: Bearer YOUR_API_KEY
 ## Path Parameters
 
 <ParamField path="id" type="string" required>
-  The payment document ID — the `id` field carried by the `payment.*` webhooks.
+  The payment document ID - the `id` field carried by the `payment.*` webhooks.
 </ParamField>
 
 ## Body Parameters
@@ -115,7 +115,7 @@ curl_close($ch);
 
 ## Response
 
-The full payment is returned in its **post-update** state, wrapped in the standard `{ message, data }` envelope — identical in shape to [`GET /payments/{id}`](/api-reference/payments).
+The full payment is returned in its **post-update** state, wrapped in the standard `{ message, data }` envelope - identical in shape to [`GET /payments/{id}`](/api-reference/payments).
 
 ```json
 {
@@ -145,7 +145,7 @@ See the [Get a Payment](/api-reference/payments#fields) reference for the full f
 | Status | Meaning |
 |--------|---------|
 | `400` | Missing/invalid token, missing payment id, empty/invalid body, no updatable fields, or a field that fails validation (unknown `status`, non-integer `amount`, malformed date) |
-| `404` | Payment not found — it does not exist, belongs to another venue, or is a security deposit (hold) |
+| `404` | Payment not found - it does not exist, belongs to another venue, or is a security deposit (hold) |
 | `429` | [Rate limit](/api-reference/rate-limiting) exceeded (30 requests/minute) |
 | `500` | Internal server error |
 

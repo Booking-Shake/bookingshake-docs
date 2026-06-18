@@ -8,8 +8,8 @@ icon: "box"
 
 The product endpoints expose your venue catalog (the products and services you sell):
 
-- `GET /products` — list the **whole catalog** of your venue (no pagination)
-- `GET /products/{id}` — retrieve a **single product** by its ID
+- `GET /products` - list the **whole catalog** of your venue (no pagination)
+- `GET /products/{id}` - retrieve a **single product** by its ID
 
 Soft-deleted products are never returned. A product is a **package** when its `package_products` array is non-empty.
 
@@ -166,7 +166,7 @@ curl_close($ch);
 | Status | Meaning |
 |--------|---------|
 | `400` | Missing/invalid token, or missing product id (`GET /products/{id}`) |
-| `404` | Product not found — it does not exist, belongs to another venue, or has been deleted |
+| `404` | Product not found - it does not exist, belongs to another venue, or has been deleted |
 | `429` | [Rate limit](/api-reference/rate-limiting) exceeded (60 requests/minute) |
 | `500` | Internal server error |
 

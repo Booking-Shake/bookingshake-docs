@@ -5,12 +5,12 @@ icon: "credit-card"
 ---
 
 <Warning>
-  **Beta** — Payment data is currently in beta. The payload structure may still evolve before general availability. Share your feedback at [support@bookingshake.com](mailto:support@bookingshake.com).
+  **Beta** - Payment data is currently in beta. The payload structure may still evolve before general availability. Share your feedback at [support@bookingshake.com](mailto:support@bookingshake.com).
 </Warning>
 
 ## Overview
 
-`GET /payments/{id}` returns a single payment by its document ID — useful to back-fill a missed webhook or reconcile a payment on demand.
+`GET /payments/{id}` returns a single payment by its document ID - useful to back-fill a missed webhook or reconcile a payment on demand.
 
 <Note>
   **Security deposits (holds) are out of scope** and return `404`, consistent with the payment webhooks (which never emit for holds). Amounts are integer **cents**, dates are `YYYY-MM-DD` strings in the `Europe/Paris` timezone, timestamps are Unix **milliseconds**, and missing values are explicit `null`.
@@ -27,7 +27,7 @@ Authorization: Bearer YOUR_API_KEY
 ## Path Parameters
 
 <ParamField path="id" type="string" required>
-  The payment document ID — the `id` field carried by the `payment.*` webhooks.
+  The payment document ID - the `id` field carried by the `payment.*` webhooks.
 </ParamField>
 
 ## Request
@@ -102,12 +102,12 @@ The payment is returned wrapped in the standard `{ message, data }` envelope.
 | `amount` | number \| null | Amount in integer cents |
 | `status` | string \| null | `waiting`, `paid`, or `canceled` |
 | `name` | string \| null | Payment label as entered by the user |
-| `method` | string \| null | Payment method, **verbatim** label (not a normalized enum) — appears in the venue locale language. Do not build logic on exact values |
+| `method` | string \| null | Payment method, **verbatim** label (not a normalized enum) - appears in the venue locale language. Do not build logic on exact values |
 | `received_date` | string \| null | Date the payment was received, `YYYY-MM-DD` |
 | `due_date` | string \| null | Date the payment is expected, `YYYY-MM-DD` |
 | `created_at` | number \| null | Creation timestamp, Unix milliseconds |
 | `updated_at` | number \| null | Last update timestamp, Unix milliseconds |
-| `invoice_id` | string \| null | ID of the linked invoice — matches the `id` of [`GET /invoices/{id}`](/api-reference/invoices) |
+| `invoice_id` | string \| null | ID of the linked invoice - matches the `id` of [`GET /invoices/{id}`](/api-reference/invoices) |
 | `invoice_number` | string \| null | Number of the linked invoice, denormalized for convenience |
 | `quote_id` | string \| null | ID of the linked quote |
 | `booking_id` | string \| null | Correlation key shared with [invoice](/api-reference/webhooks/invoices) and payment events of the same booking |
@@ -119,7 +119,7 @@ See the [payment webhook documentation](/api-reference/webhooks/payments#data-fi
 | Status | Meaning |
 |--------|---------|
 | `400` | Missing/invalid token, or missing payment id |
-| `404` | Payment not found — it does not exist, belongs to another venue, or is a security deposit (hold) |
+| `404` | Payment not found - it does not exist, belongs to another venue, or is a security deposit (hold) |
 | `429` | [Rate limit](/api-reference/rate-limiting) exceeded (60 requests/minute) |
 | `500` | Internal server error |
 

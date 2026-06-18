@@ -5,14 +5,14 @@ icon: "file-invoice"
 ---
 
 <Warning>
-  **Beta** — Invoice events are currently in beta. The payload structure may still evolve before general availability. If you build on them, share your feedback at [support@bookingshake.com](mailto:support@bookingshake.com).
+  **Beta** - Invoice events are currently in beta. The payload structure may still evolve before general availability. If you build on them, share your feedback at [support@bookingshake.com](mailto:support@bookingshake.com).
 </Warning>
 
 ## Overview
 
 The `invoice.created` event is sent every time an invoice document is issued in BookingShake. This covers all invoice document types: standard invoices, deposit invoices, balance invoices, and credit notes.
 
-The **legal invoice** is immutable once issued — its amounts, lines, and seller / account / contact snapshots are frozen — so there is no `invoice.updated` or `invoice.deleted` event. A legal correction is always materialized by a new document (typically a credit note), which triggers its own `invoice.created` event. The only writable part of an invoice is its free-form [`metadata`](/api-reference/invoices-update) (integration key/value pairs); updating it is a silent side-channel write that emits **no** webhook.
+The **legal invoice** is immutable once issued - its amounts, lines, and seller / account / contact snapshots are frozen - so there is no `invoice.updated` or `invoice.deleted` event. A legal correction is always materialized by a new document (typically a credit note), which triggers its own `invoice.created` event. The only writable part of an invoice is its free-form [`metadata`](/api-reference/invoices-update) (integration key/value pairs); updating it is a silent side-channel write that emits **no** webhook.
 
 <Note>
   Quotes do not trigger this event. Global invoices (issued across multiple bookings at once) are also excluded.
@@ -62,7 +62,7 @@ The `type` field identifies the document type. `type_code` carries the correspon
     "type": "balance_invoice",
     "type_code": 380,
     "status": "ongoing",
-    "title": "Séminaire Acme — 12 juin 2026",
+    "title": "Séminaire Acme - 12 juin 2026",
     "language": "fr",
     "currency": "EUR",
     "created_at": 1749722400000,

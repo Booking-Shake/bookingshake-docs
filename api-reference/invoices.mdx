@@ -5,12 +5,12 @@ icon: "file-invoice"
 ---
 
 <Warning>
-  **Beta** — Invoice data is currently in beta. The payload structure may still evolve before general availability. Share your feedback at [support@bookingshake.com](mailto:support@bookingshake.com).
+  **Beta** - Invoice data is currently in beta. The payload structure may still evolve before general availability. Share your feedback at [support@bookingshake.com](mailto:support@bookingshake.com).
 </Warning>
 
 ## Overview
 
-`GET /invoices/{id}` returns a single invoice by its document ID — useful to back-fill a missed webhook, reconcile your accounting, or re-fetch a document on demand.
+`GET /invoices/{id}` returns a single invoice by its document ID - useful to back-fill a missed webhook, reconcile your accounting, or re-fetch a document on demand.
 
 The endpoint returns standard invoices, deposit invoices, balance invoices, and their credit notes. **Quotes are not exposed** by this endpoint.
 
@@ -29,7 +29,7 @@ Authorization: Bearer YOUR_API_KEY
 ## Path Parameters
 
 <ParamField path="id" type="string" required>
-  The invoice document ID — the `id` field carried by the `invoice.created` webhook.
+  The invoice document ID - the `id` field carried by the `invoice.created` webhook.
 </ParamField>
 
 ## Request
@@ -84,7 +84,7 @@ The invoice is returned wrapped in the standard `{ message, data }` envelope. Th
     "type": "balance_invoice",
     "type_code": 380,
     "status": "ongoing",
-    "title": "Séminaire Acme — 12 juin 2026",
+    "title": "Séminaire Acme - 12 juin 2026",
     "language": "fr",
     "currency": "EUR",
     "created_at": 1749722400000,
@@ -171,7 +171,7 @@ For the complete field reference (amounts, lines, snapshot blocks), see the [inv
 | Status | Meaning |
 |--------|---------|
 | `400` | Missing/invalid token, or missing invoice id |
-| `404` | Invoice not found — it does not exist, belongs to another venue, or is not an invoice (e.g. a quote) |
+| `404` | Invoice not found - it does not exist, belongs to another venue, or is not an invoice (e.g. a quote) |
 | `429` | [Rate limit](/api-reference/rate-limiting) exceeded (60 requests/minute) |
 | `500` | Internal server error |
 

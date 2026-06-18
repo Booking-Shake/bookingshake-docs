@@ -5,17 +5,17 @@ icon: "pen-to-square"
 ---
 
 <Warning>
-  **Beta** — Invoice data is currently in beta. The payload structure may still evolve before general availability. Share your feedback at [support@bookingshake.com](mailto:support@bookingshake.com).
+  **Beta** - Invoice data is currently in beta. The payload structure may still evolve before general availability. Share your feedback at [support@bookingshake.com](mailto:support@bookingshake.com).
 </Warning>
 
 ## Overview
 
-`PATCH /invoices/{id}` updates the **`metadata`** of an issued invoice — a free-form bag of string key/value pairs you can use to attach your own references (an external accounting ID, a Mews record, a sync state…).
+`PATCH /invoices/{id}` updates the **`metadata`** of an issued invoice - a free-form bag of string key/value pairs you can use to attach your own references (an external accounting ID, a Mews record, a sync state…).
 
 An issued invoice is **legally immutable**: its amounts, lines, and the seller / account / contact snapshots are frozen at issue time and **cannot** be changed through this endpoint. `metadata` is the only writable field; it lives alongside the legal invoice and never affects it. A legal correction is always materialized by a new document (typically a credit note), never by editing an invoice.
 
 <Note>
-  This endpoint does **not** emit any webhook — there is no `invoice.updated` event. Updating `metadata` is a silent, side-channel write. Any attempt to modify a legal field is rejected with `422`.
+  This endpoint does **not** emit any webhook - there is no `invoice.updated` event. Updating `metadata` is a silent, side-channel write. Any attempt to modify a legal field is rejected with `422`.
 </Note>
 
 The merge is **per key**:
@@ -34,7 +34,7 @@ Authorization: Bearer YOUR_API_KEY
 ## Path Parameters
 
 <ParamField path="id" type="string" required>
-  The invoice document ID — the `id` field carried by the `invoice.created` webhook.
+  The invoice document ID - the `id` field carried by the `invoice.created` webhook.
 </ParamField>
 
 ## Body Parameters
@@ -104,7 +104,7 @@ curl_close($ch);
 
 ## Response
 
-The full invoice is returned in its **post-update** state, wrapped in the standard `{ message, data }` envelope — identical in shape to [`GET /invoices/{id}`](/api-reference/invoices), with the updated `metadata`.
+The full invoice is returned in its **post-update** state, wrapped in the standard `{ message, data }` envelope - identical in shape to [`GET /invoices/{id}`](/api-reference/invoices), with the updated `metadata`.
 
 ```json
 {
@@ -133,7 +133,7 @@ See the [Get an Invoice](/api-reference/invoices#key-fields) reference for the f
 |--------|---------|
 | `400` | Missing/invalid token, missing invoice id, empty/invalid body, or no `metadata` provided |
 | `422` | A field other than `metadata` was sent (legal fields are immutable), `metadata` is not a flat object of strings, or a limit was exceeded (50 keys, key ≤ 40 chars, value ≤ 500 chars) |
-| `404` | Invoice not found — it does not exist, belongs to another venue, or is not an invoice (e.g. a quote) |
+| `404` | Invoice not found - it does not exist, belongs to another venue, or is not an invoice (e.g. a quote) |
 | `429` | [Rate limit](/api-reference/rate-limiting) exceeded (30 requests/minute) |
 | `500` | Internal server error |
 

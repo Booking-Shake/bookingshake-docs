@@ -1436,7 +1436,7 @@
                     "type": "balance_invoice",
                     "type_code": 380,
                     "status": "ongoing",
-                    "title": "Séminaire Acme — 12 juin 2026",
+                    "title": "Séminaire Acme - 12 juin 2026",
                     "language": "fr",
                     "currency": "EUR",
                     "created_at": 1749722400000,
@@ -1589,7 +1589,7 @@
       },
       "patch": {
         "summary": "Update an invoice",
-        "description": "Update the `metadata` of an issued invoice — a free-form bag of string key/value pairs for your own integration references (external accounting ID, Mews record, sync state…).\n\nAn issued invoice is legally immutable: its amounts, lines, and seller/account/contact snapshots are frozen and cannot be changed here. `metadata` is the only writable field, and sending any other field returns `422`. The merge is per key: `metadata: { \"ref\": \"ABC\" }` upserts the `ref` key; `metadata: { \"ref\": null }` deletes it; omitted keys are left untouched.\n\nThis endpoint emits no webhook — there is no `invoice.updated` event.",
+        "description": "Update the `metadata` of an issued invoice - a free-form bag of string key/value pairs for your own integration references (external accounting ID, Mews record, sync state…).\n\nAn issued invoice is legally immutable: its amounts, lines, and seller/account/contact snapshots are frozen and cannot be changed here. `metadata` is the only writable field, and sending any other field returns `422`. The merge is per key: `metadata: { \"ref\": \"ABC\" }` upserts the `ref` key; `metadata: { \"ref\": null }` deletes it; omitted keys are left untouched.\n\nThis endpoint emits no webhook - there is no `invoice.updated` event.",
         "operationId": "updateInvoice",
         "tags": ["Invoices"],
         "security": [{ "bearerAuth": [] }],
@@ -1911,7 +1911,7 @@
     "/products": {
       "get": {
         "summary": "List products",
-        "description": "Retrieve the full product catalog of your venue (the `/products` collection).\n\nReturns every active product; soft-deleted products (`isDeleted`) are excluded. There is no pagination — the whole catalog is returned in one call. Every field is always present with an explicit `null` when unset. Amounts are verbatim: `price`/`cost` in cents, `vat` in basis points (200 = 2%). A product is a package when its `package_products` array is non-empty.",
+        "description": "Retrieve the full product catalog of your venue (the `/products` collection).\n\nReturns every active product; soft-deleted products (`isDeleted`) are excluded. There is no pagination - the whole catalog is returned in one call. Every field is always present with an explicit `null` when unset. Amounts are verbatim: `price`/`cost` in cents, `vat` in basis points (200 = 2%). A product is a package when its `package_products` array is non-empty.",
         "operationId": "getProducts",
         "tags": ["Products"],
         "security": [{ "bearerAuth": [] }],
@@ -2912,7 +2912,7 @@
       },
       "UpdatePaymentRequest": {
         "type": "object",
-        "description": "Fields that can be updated on a payment. All fields are optional (partial update): only the fields present in the body are modified. Same conventions as the response — `amount` in integer cents, dates as `YYYY-MM-DD` in the `Europe/Paris` timezone. At least one field must be provided.",
+        "description": "Fields that can be updated on a payment. All fields are optional (partial update): only the fields present in the body are modified. Same conventions as the response - `amount` in integer cents, dates as `YYYY-MM-DD` in the `Europe/Paris` timezone. At least one field must be provided.",
         "minProperties": 1,
         "additionalProperties": false,
         "properties": {

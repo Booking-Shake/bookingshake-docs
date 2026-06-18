@@ -5,17 +5,17 @@ icon: "pen-to-square"
 ---
 
 <Warning>
-  **Beta** — Contact data is currently in beta. The payload structure may still evolve before general availability. Share your feedback at [support@bookingshake.com](mailto:support@bookingshake.com).
+  **Beta** - Contact data is currently in beta. The payload structure may still evolve before general availability. Share your feedback at [support@bookingshake.com](mailto:support@bookingshake.com).
 </Warning>
 
 ## Overview
 
 `PATCH /contacts/{id}` updates a single contact (person) by its ID. It is a **partial** update: only the fields you include in the body are modified, everything else is left untouched.
 
-The request body uses the **same conventions as the response** — the English (snake_case) field names returned by [`GET /contacts/{id}`](/api-reference/contacts). So you can read a contact, change a few fields, and send them straight back. Pass `null` on any field to clear it.
+The request body uses the **same conventions as the response** - the English (snake_case) field names returned by [`GET /contacts/{id}`](/api-reference/contacts). So you can read a contact, change a few fields, and send them straight back. Pass `null` on any field to clear it.
 
 <Note>
-  Updating a contact automatically emits the [`contact.updated`](/api-reference/webhooks/contacts) webhook when at least one exposed field changes. The `country` field is stored **verbatim** as provided — no ISO normalization.
+  Updating a contact automatically emits the [`contact.updated`](/api-reference/webhooks/contacts) webhook when at least one exposed field changes. The `country` field is stored **verbatim** as provided - no ISO normalization.
 </Note>
 
 ## Authentication
@@ -29,7 +29,7 @@ Authorization: Bearer YOUR_API_KEY
 ## Path Parameters
 
 <ParamField path="id" type="string" required>
-  The contact ID — the `id` field carried by the `contact.*` webhooks.
+  The contact ID - the `id` field carried by the `contact.*` webhooks.
 </ParamField>
 
 ## Body Parameters
@@ -168,7 +168,7 @@ curl_close($ch);
 
 ## Response
 
-The full contact is returned in its **post-update** state, wrapped in the standard `{ message, data }` envelope — identical in shape to [`GET /contacts/{id}`](/api-reference/contacts).
+The full contact is returned in its **post-update** state, wrapped in the standard `{ message, data }` envelope - identical in shape to [`GET /contacts/{id}`](/api-reference/contacts).
 
 ```json
 {
@@ -206,7 +206,7 @@ See the [Get a Contact](/api-reference/contacts#data-fields) reference for the f
 | Status | Meaning |
 |--------|---------|
 | `400` | Missing/invalid token, missing contact id, empty/invalid body, no updatable fields, a wrongly-typed value (e.g. a non-string on a string field, a non-boolean opt-in), a value over 255 characters, an invalid email, an `account_id` outside the contact's scope, or an unknown custom field key |
-| `404` | Contact not found — it does not exist, or belongs to another venue or venues group |
+| `404` | Contact not found - it does not exist, or belongs to another venue or venues group |
 | `429` | [Rate limit](/api-reference/rate-limiting) exceeded (30 requests/minute) |
 | `500` | Internal server error |
 

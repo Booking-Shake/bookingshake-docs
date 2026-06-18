@@ -5,15 +5,15 @@ icon: "user"
 ---
 
 <Warning>
-  **Beta** — Contact data is currently in beta. The payload structure may still evolve before general availability. Share your feedback at [support@bookingshake.com](mailto:support@bookingshake.com).
+  **Beta** - Contact data is currently in beta. The payload structure may still evolve before general availability. Share your feedback at [support@bookingshake.com](mailto:support@bookingshake.com).
 </Warning>
 
 ## Overview
 
-`GET /contacts/{id}` returns a single contact (person) by its ID — useful to back-fill a missed `contact.*` webhook, reconcile your CRM, or re-fetch a person on demand.
+`GET /contacts/{id}` returns a single contact (person) by its ID - useful to back-fill a missed `contact.*` webhook, reconcile your CRM, or re-fetch a person on demand.
 
 <Note>
-  Unlike the [contact webhook](/api-reference/webhooks/contacts) — which **omits** fields without a value — this endpoint always returns every field with an explicit `null` when unset (consistent with [GET /accounts](/api-reference/accounts), [GET /invoices](/api-reference/invoices) and [GET /payments](/api-reference/payments)). The `country` field is returned **verbatim** as entered. `account_id` is the raw ID of the linked [account](/api-reference/accounts) (or `null`) — call `GET /accounts/{id}` to fetch the company details. Custom fields configured for your venue are included, also with explicit `null` when unset. Timestamps are Unix **milliseconds**.
+  Unlike the [contact webhook](/api-reference/webhooks/contacts) - which **omits** fields without a value - this endpoint always returns every field with an explicit `null` when unset (consistent with [GET /accounts](/api-reference/accounts), [GET /invoices](/api-reference/invoices) and [GET /payments](/api-reference/payments)). The `country` field is returned **verbatim** as entered. `account_id` is the raw ID of the linked [account](/api-reference/accounts) (or `null`) - call `GET /accounts/{id}` to fetch the company details. Custom fields configured for your venue are included, also with explicit `null` when unset. Timestamps are Unix **milliseconds**.
 </Note>
 
 ## Authentication
@@ -27,7 +27,7 @@ Authorization: Bearer YOUR_API_KEY
 ## Path Parameters
 
 <ParamField path="id" type="string" required>
-  The contact ID — the `id` field carried by the `contact.created` webhook.
+  The contact ID - the `id` field carried by the `contact.created` webhook.
 </ParamField>
 
 ## Request
@@ -132,7 +132,7 @@ The contact is returned wrapped in the standard `{ message, data }` envelope.
 | Status | Meaning |
 |--------|---------|
 | `400` | Missing/invalid token, or missing contact id |
-| `404` | Contact not found — it does not exist, or belongs to another venue or venues group |
+| `404` | Contact not found - it does not exist, or belongs to another venue or venues group |
 | `429` | [Rate limit](/api-reference/rate-limiting) exceeded (60 requests/minute) |
 | `500` | Internal server error |
 

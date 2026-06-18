@@ -5,14 +5,14 @@ icon: "credit-card"
 ---
 
 <Warning>
-  **Beta** — Payment events are currently in beta. The payload structure may still evolve before general availability. If you build on them, share your feedback at [support@bookingshake.com](mailto:support@bookingshake.com).
+  **Beta** - Payment events are currently in beta. The payload structure may still evolve before general availability. If you build on them, share your feedback at [support@bookingshake.com](mailto:support@bookingshake.com).
 </Warning>
 
 ## Overview
 
 Payment events notify you of every change to payments in BookingShake: `payment.created`, `payment.updated`, and `payment.deleted`.
 
-These are pure CRUD events — there is no separate "payment received" event. The payment lifecycle is carried by the `status` field in the payload: a scheduled payment is created with status `waiting`, then updated to `paid` when received. An online payment received immediately emits a single `payment.created` with status `paid`.
+These are pure CRUD events - there is no separate "payment received" event. The payment lifecycle is carried by the `status` field in the payload: a scheduled payment is created with status `waiting`, then updated to `paid` when received. An online payment received immediately emits a single `payment.created` with status `paid`.
 
 <Note>
   **Security deposits (holds) are out of scope.** Documents recorded as security deposits never emit payment events. If a security deposit is converted into a payment (or vice versa), no `created`/`deleted` event is emitted for the transition.
@@ -60,7 +60,7 @@ The payment payload follows the same conventions as [invoice events](/api-refere
 }
 ```
 
-All three events (`payment.created`, `payment.updated`, `payment.deleted`) carry the same `data` structure. Unlike [`account.deleted`](/api-reference/webhooks/accounts) and [`contact.deleted`](/api-reference/webhooks/contacts), **`payment.deleted` includes the full payment data** as it was just before deletion — not only the ID.
+All three events (`payment.created`, `payment.updated`, `payment.deleted`) carry the same `data` structure. Unlike [`account.deleted`](/api-reference/webhooks/accounts) and [`contact.deleted`](/api-reference/webhooks/contacts), **`payment.deleted` includes the full payment data** as it was just before deletion - not only the ID.
 
 ## Data Fields
 
@@ -70,19 +70,19 @@ All three events (`payment.created`, `payment.updated`, `payment.deleted`) carry
 | `amount` | number \| null | Amount in integer cents |
 | `status` | string \| null | `waiting`, `paid`, or `canceled` |
 | `name` | string \| null | Payment label as entered by the user |
-| `method` | string \| null | Payment method — see [Payment methods](#payment-methods) |
+| `method` | string \| null | Payment method - see [Payment methods](#payment-methods) |
 | `received_date` | string \| null | Date the payment was received, `YYYY-MM-DD` |
 | `due_date` | string \| null | Date the payment is expected, `YYYY-MM-DD` |
 | `created_at` | number \| null | Creation timestamp, Unix milliseconds |
 | `updated_at` | number \| null | Last update timestamp, Unix milliseconds |
-| `invoice_id` | string \| null | ID of the linked invoice — matches `data.id` of [`invoice.created`](/api-reference/webhooks/invoices) |
+| `invoice_id` | string \| null | ID of the linked invoice - matches `data.id` of [`invoice.created`](/api-reference/webhooks/invoices) |
 | `invoice_number` | string \| null | Number of the linked invoice, denormalized for convenience |
 | `quote_id` | string \| null | ID of the linked quote |
 | `booking_id` | string \| null | Opaque correlation key of the booking: all payments and [invoices](/api-reference/webhooks/invoices) of the same booking share the same value |
 
 ### Payment Methods
 
-`method` is the payment method label **verbatim**, as displayed to the user who recorded the payment. It is not a normalized enum: the same method appears in the language of the venue's locale (e.g., `Virement bancaire` / `Wire transfer`). Standard methods include card on site, card remote, voucher, check, cash, online payment, wire transfer, and restaurant vouchers — but free-text values are possible.
+`method` is the payment method label **verbatim**, as displayed to the user who recorded the payment. It is not a normalized enum: the same method appears in the language of the venue's locale (e.g., `Virement bancaire` / `Wire transfer`). Standard methods include card on site, card remote, voucher, check, cash, online payment, wire transfer, and restaurant vouchers - but free-text values are possible.
 
 <Warning>
   Do not build logic on exact `method` values. Treat it as a display label, or map known labels defensively on your side.

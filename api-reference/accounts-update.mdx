@@ -5,17 +5,17 @@ icon: "pen-to-square"
 ---
 
 <Warning>
-  **Beta** — Account data is currently in beta. The payload structure may still evolve before general availability. Share your feedback at [support@bookingshake.com](mailto:support@bookingshake.com).
+  **Beta** - Account data is currently in beta. The payload structure may still evolve before general availability. Share your feedback at [support@bookingshake.com](mailto:support@bookingshake.com).
 </Warning>
 
 ## Overview
 
 `PATCH /accounts/{id}` updates a single account (company) by its ID. It is a **partial** update: only the fields you include in the body are modified, everything else is left untouched.
 
-The request body uses the **same conventions as the response** — the English (snake_case) field names returned by [`GET /accounts/{id}`](/api-reference/accounts). So you can read an account, change a few fields, and send them straight back. Pass `null` on any field to clear it.
+The request body uses the **same conventions as the response** - the English (snake_case) field names returned by [`GET /accounts/{id}`](/api-reference/accounts). So you can read an account, change a few fields, and send them straight back. Pass `null` on any field to clear it.
 
 <Note>
-  Updating an account automatically emits the [`account.updated`](/api-reference/webhooks/accounts) webhook when at least one exposed field changes. Country fields (`country`, `billing_country`) are stored **verbatim** as provided — no ISO normalization.
+  Updating an account automatically emits the [`account.updated`](/api-reference/webhooks/accounts) webhook when at least one exposed field changes. Country fields (`country`, `billing_country`) are stored **verbatim** as provided - no ISO normalization.
 </Note>
 
 ## Authentication
@@ -29,7 +29,7 @@ Authorization: Bearer YOUR_API_KEY
 ## Path Parameters
 
 <ParamField path="id" type="string" required>
-  The account ID — the `id` field carried by the `account.*` webhooks.
+  The account ID - the `id` field carried by the `account.*` webhooks.
 </ParamField>
 
 ## Body Parameters
@@ -171,7 +171,7 @@ curl_close($ch);
 
 ## Response
 
-The full account is returned in its **post-update** state, wrapped in the standard `{ message, data }` envelope — identical in shape to [`GET /accounts/{id}`](/api-reference/accounts).
+The full account is returned in its **post-update** state, wrapped in the standard `{ message, data }` envelope - identical in shape to [`GET /accounts/{id}`](/api-reference/accounts).
 
 ```json
 {
@@ -211,7 +211,7 @@ See the [Get an Account](/api-reference/accounts#data-fields) reference for the 
 | Status | Meaning |
 |--------|---------|
 | `400` | Missing/invalid token, missing account id, empty/invalid body, no updatable fields, a non-string value on a string field, a value over 255 characters, or an unknown custom field key |
-| `404` | Account not found — it does not exist, or belongs to another venue or venues group |
+| `404` | Account not found - it does not exist, or belongs to another venue or venues group |
 | `429` | [Rate limit](/api-reference/rate-limiting) exceeded (30 requests/minute) |
 | `500` | Internal server error |
 

@@ -5,15 +5,15 @@ icon: "building"
 ---
 
 <Warning>
-  **Beta** — Account data is currently in beta. The payload structure may still evolve before general availability. Share your feedback at [support@bookingshake.com](mailto:support@bookingshake.com).
+  **Beta** - Account data is currently in beta. The payload structure may still evolve before general availability. Share your feedback at [support@bookingshake.com](mailto:support@bookingshake.com).
 </Warning>
 
 ## Overview
 
-`GET /accounts/{id}` returns a single account (company) by its ID — useful to back-fill a missed `account.*` webhook, reconcile your CRM, or re-fetch a company on demand.
+`GET /accounts/{id}` returns a single account (company) by its ID - useful to back-fill a missed `account.*` webhook, reconcile your CRM, or re-fetch a company on demand.
 
 <Note>
-  Unlike the [account webhook](/api-reference/webhooks/accounts) — which **omits** fields without a value — this endpoint always returns every field with an explicit `null` when unset (consistent with [GET /invoices](/api-reference/invoices) and [GET /payments](/api-reference/payments)). Country fields (`country`, `billing_country`) are returned **verbatim** as entered. Custom fields configured for your venue are included, also with explicit `null` when unset. Timestamps are Unix **milliseconds**.
+  Unlike the [account webhook](/api-reference/webhooks/accounts) - which **omits** fields without a value - this endpoint always returns every field with an explicit `null` when unset (consistent with [GET /invoices](/api-reference/invoices) and [GET /payments](/api-reference/payments)). Country fields (`country`, `billing_country`) are returned **verbatim** as entered. Custom fields configured for your venue are included, also with explicit `null` when unset. Timestamps are Unix **milliseconds**.
 </Note>
 
 ## Authentication
@@ -27,7 +27,7 @@ Authorization: Bearer YOUR_API_KEY
 ## Path Parameters
 
 <ParamField path="id" type="string" required>
-  The account ID — the `id` field carried by the `account.created` webhook.
+  The account ID - the `id` field carried by the `account.created` webhook.
 </ParamField>
 
 ## Request
@@ -136,7 +136,7 @@ The account is returned wrapped in the standard `{ message, data }` envelope.
 | Status | Meaning |
 |--------|---------|
 | `400` | Missing/invalid token, or missing account id |
-| `404` | Account not found — it does not exist, or belongs to another venue or venues group |
+| `404` | Account not found - it does not exist, or belongs to another venue or venues group |
 | `429` | [Rate limit](/api-reference/rate-limiting) exceeded (60 requests/minute) |
 | `500` | Internal server error |
 
