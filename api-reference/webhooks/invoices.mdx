@@ -12,7 +12,7 @@ icon: "file-invoice"
 
 The `invoice.created` event is sent every time an invoice document is issued in BookingShake. This covers all invoice document types: standard invoices, deposit invoices, balance invoices, and credit notes.
 
-Invoices are immutable once issued, so there is no `invoice.updated` or `invoice.deleted` event. A correction is always materialized by a new document (typically a credit note), which triggers its own `invoice.created` event.
+The **legal invoice** is immutable once issued — its amounts, lines, and seller / account / contact snapshots are frozen — so there is no `invoice.updated` or `invoice.deleted` event. A legal correction is always materialized by a new document (typically a credit note), which triggers its own `invoice.created` event. The only writable part of an invoice is its free-form [`metadata`](/api-reference/invoices-update) (integration key/value pairs); updating it is a silent side-channel write that emits **no** webhook.
 
 <Note>
   Quotes do not trigger this event. Global invoices (issued across multiple bookings at once) are also excluded.

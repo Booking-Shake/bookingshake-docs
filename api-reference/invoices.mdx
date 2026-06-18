@@ -142,7 +142,8 @@ The invoice is returned wrapped in the standard `{ message, data }` envelope. Th
     "seller": { "id": "venue123", "legal_name": "HOTEL EXAMPLE SAS", "...": "..." },
     "account": { "id": "account-123", "name": "Acme Corp", "...": "..." },
     "contact": { "id": "contact-456", "first_name": "John", "last_name": "Doe", "...": "..." },
-    "pdf_url": "https://storage.googleapis.com/.../FAC-2026-0042.pdf"
+    "pdf_url": "https://storage.googleapis.com/.../FAC-2026-0042.pdf",
+    "metadata": { "external_ref": "MEWS-2026-0042" }
   }
 }
 ```
@@ -161,6 +162,7 @@ The invoice is returned wrapped in the standard `{ message, data }` envelope. Th
 | `booking_id` | string \| null | Correlation key shared with [payment](/api-reference/webhooks/payments) and invoice events of the same booking |
 | `seller` / `account` / `contact` | object \| null | Frozen legal-mention snapshots captured at issue time |
 | `pdf_url` | string \| null | URL of the generated PDF |
+| `metadata` | object | Free-form integration key/value pairs (strings), editable via [`PATCH /invoices/{id}`](/api-reference/invoices-update). Empty `{}` when unset |
 
 For the complete field reference (amounts, lines, snapshot blocks), see the [invoice webhook documentation](/api-reference/webhooks/invoices#data-fields).
 

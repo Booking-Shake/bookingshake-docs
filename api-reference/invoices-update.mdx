@@ -1,0 +1,154 @@
+---
+title: "Update an Invoice"
+description: "Attach integration metadata to an issued invoice"
+icon: "pen-to-square"
+---
+
+<Warning>
+  **Beta** — Invoice data is currently in beta. The payload structure may still evolve before general availability. Share your feedback at [support@bookingshake.com](mailto:support@bookingshake.com).
+</Warning>
+
+## Overview
+
+`PATCH /invoices/{id}` updates the **`metadata`** of an issued invoice — a free-form bag of string key/value pairs you can use to attach your own references (an external accounting ID, a Mews record, a sync state…).
+
+An issued invoice is **legally immutable**: its amounts, lines, and the seller / account / contact snapshots are frozen at issue time and **cannot** be changed through this endpoint. `metadata` is the only writable field; it lives alongside the legal invoice and never affects it. A legal correction is always materialized by a new document (typically a credit note), never by editing an invoice.
+
+<Note>
+  This endpoint does **not** emit any webhook — there is no `invoice.updated` event. Updating `metadata` is a silent, side-channel write. Any attempt to modify a legal field is rejected with `422`.
+</Note>
+
+The merge is **per key**:
+
+- `metadata: { "ref": "ABC" }` upserts the `ref` key, leaving every other key untouched.
+- `metadata: { "ref": null }` deletes the `ref` key.
+
+## Authentication
+
+All requests require a Bearer token (your BookingShake API key):
+
+```
+Authorization: Bearer YOUR_API_KEY
+```
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+  The invoice document ID — the `id` field carried by the `invoice.created` webhook.
+</ParamField>
+
+## Body Parameters
+
+<ParamField body="metadata" type="object" required>
+  A flat object of **string** values. Pass `null` as a value to delete that key. Keys present in the object are merged into the existing metadata; keys you omit are left untouched.
+
+  **Limits:** up to **50** keys per invoice, each key ≤ **40** characters, each value ≤ **500** characters. Nested objects, arrays, and non-string values are rejected with `422`.
+</ParamField>
+
+## Request
+
+<CodeGroup>
+
+```bash cURL
+curl -X PATCH https://api.bookingshake.io/api/invoices/file-789 \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "metadata": { "external_ref": "MEWS-2026-0042", "synced_at": "2026-06-18" } }'
+```
+
+```javascript Node.js
+const res = await fetch("https://api.bookingshake.io/api/invoices/file-789", {
+  method: "PATCH",
+  headers: {
+    Authorization: `Bearer ${process.env.BOOKINGSHAKE_API_KEY}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    metadata: { external_ref: "MEWS-2026-0042", synced_at: "2026-06-18" },
+  }),
+});
+const { data: invoice } = await res.json();
+```
+
+```python Python
+import os, requests
+
+res = requests.patch(
+    "https://api.bookingshake.io/api/invoices/file-789",
+    headers={"Authorization": f"Bearer {os.environ['BOOKINGSHAKE_API_KEY']}"},
+    json={"metadata": {"external_ref": "MEWS-2026-0042", "synced_at": "2026-06-18"}},
+)
+invoice = res.json()["data"]
+```
+
+```php PHP
+<?php
+$ch = curl_init("https://api.bookingshake.io/api/invoices/file-789");
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PATCH");
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+    "metadata" => [
+        "external_ref" => "MEWS-2026-0042",
+        "synced_at" => "2026-06-18",
+    ],
+]));
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    "Authorization: Bearer " . getenv("BOOKINGSHAKE_API_KEY"),
+    "Content-Type: application/json",
+]);
+$invoice = json_decode(curl_exec($ch), true)["data"];
+curl_close($ch);
+```
+
+</CodeGroup>
+
+## Response
+
+The full invoice is returned in its **post-update** state, wrapped in the standard `{ message, data }` envelope — identical in shape to [`GET /invoices/{id}`](/api-reference/invoices), with the updated `metadata`.
+
+```json
+{
+  "message": "success",
+  "data": {
+    "id": "file-789",
+    "number": "FAC-2026-0042",
+    "type": "balance_invoice",
+    "type_code": 380,
+    "status": "ongoing",
+    "...": "... (all legal fields, unchanged)",
+    "pdf_url": "https://storage.googleapis.com/.../FAC-2026-0042.pdf",
+    "metadata": {
+      "external_ref": "MEWS-2026-0042",
+      "synced_at": "2026-06-18"
+    }
+  }
+}
+```
+
+See the [Get an Invoice](/api-reference/invoices#key-fields) reference for the full field descriptions.
+
+## Errors
+
+| Status | Meaning |
+|--------|---------|
+| `400` | Missing/invalid token, missing invoice id, empty/invalid body, or no `metadata` provided |
+| `422` | A field other than `metadata` was sent (legal fields are immutable), `metadata` is not a flat object of strings, or a limit was exceeded (50 keys, key ≤ 40 chars, value ≤ 500 chars) |
+| `404` | Invoice not found — it does not exist, belongs to another venue, or is not an invoice (e.g. a quote) |
+| `429` | [Rate limit](/api-reference/rate-limiting) exceeded (30 requests/minute) |
+| `500` | Internal server error |
+
+<Note>
+  A `404` is returned uniformly whenever the invoice is outside your scope, so the existence of another venue's invoice is never disclosed.
+</Note>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Get an Invoice" icon="file-invoice" href="/api-reference/invoices">
+    Retrieve an invoice and read its current metadata
+  </Card>
+
+  <Card title="Invoice Events" icon="file-invoice" href="/api-reference/webhooks/invoices">
+    Receive invoices in real time via the invoice.created webhook
+  </Card>
+</CardGroup>

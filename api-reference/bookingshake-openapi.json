@@ -1548,7 +1548,8 @@
                       "country": null,
                       "country_code": null
                     },
-                    "pdf_url": "https://storage.googleapis.com/.../FAC-2026-0042.pdf"
+                    "pdf_url": "https://storage.googleapis.com/.../FAC-2026-0042.pdf",
+                    "metadata": { "external_ref": "MEWS-2026-0042" }
                   }
                 }
               }
@@ -1560,6 +1561,121 @@
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/ErrorResponse" },
                 "example": { "message": "invalid token" }
+              }
+            }
+          },
+          "404": {
+            "description": "Invoice not found. Returned when the invoice does not exist, belongs to another venue, or is not an invoice (e.g. a quote).",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "message": "not found" }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitExceeded"
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "message": "error" }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update an invoice",
+        "description": "Update the `metadata` of an issued invoice — a free-form bag of string key/value pairs for your own integration references (external accounting ID, Mews record, sync state…).\n\nAn issued invoice is legally immutable: its amounts, lines, and seller/account/contact snapshots are frozen and cannot be changed here. `metadata` is the only writable field, and sending any other field returns `422`. The merge is per key: `metadata: { \"ref\": \"ABC\" }` upserts the `ref` key; `metadata: { \"ref\": null }` deletes it; omitted keys are left untouched.\n\nThis endpoint emits no webhook — there is no `invoice.updated` event.",
+        "operationId": "updateInvoice",
+        "tags": ["Invoices"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Invoice document ID (the `id` field carried by the invoice.created webhook).",
+            "schema": { "type": "string" },
+            "example": "file-789"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateInvoiceRequest" },
+              "example": {
+                "metadata": {
+                  "external_ref": "MEWS-2026-0042",
+                  "synced_at": "2026-06-18"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Invoice metadata updated successfully. Returns the full invoice in its post-update state.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "schema": { "type": "integer" },
+                "description": "Maximum requests allowed per minute (30 for this endpoint)"
+              },
+              "X-RateLimit-Remaining": {
+                "schema": { "type": "integer" },
+                "description": "Requests remaining in the current window"
+              },
+              "X-RateLimit-Reset": {
+                "schema": { "type": "integer" },
+                "description": "Unix timestamp when the rate limit resets"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string", "example": "success" },
+                    "data": { "$ref": "#/components/schemas/Invoice" }
+                  }
+                },
+                "example": {
+                  "message": "success",
+                  "data": {
+                    "id": "file-789",
+                    "number": "FAC-2026-0042",
+                    "type": "balance_invoice",
+                    "type_code": 380,
+                    "status": "ongoing",
+                    "pdf_url": "https://storage.googleapis.com/.../FAC-2026-0042.pdf",
+                    "metadata": {
+                      "external_ref": "MEWS-2026-0042",
+                      "synced_at": "2026-06-18"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid token, missing invoice id, empty/invalid body, or no metadata provided.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "message": "no updatable fields provided" }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable entity - a field other than `metadata` was sent (legal fields are immutable), `metadata` is not a flat object of strings, or a limit was exceeded (50 keys, key ≤ 40 chars, value ≤ 500 chars).",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": { "message": "field 'status' is immutable; only metadata is editable" }
               }
             }
           },
@@ -2679,7 +2795,8 @@
           "seller": { "allOf": [{ "$ref": "#/components/schemas/InvoiceSeller" }], "nullable": true },
           "account": { "allOf": [{ "$ref": "#/components/schemas/InvoiceAccount" }], "nullable": true },
           "contact": { "allOf": [{ "$ref": "#/components/schemas/InvoiceContact" }], "nullable": true },
-          "pdf_url": { "type": "string", "nullable": true, "description": "URL of the generated PDF document" }
+          "pdf_url": { "type": "string", "nullable": true, "description": "URL of the generated PDF document" },
+          "metadata": { "type": "object", "additionalProperties": { "type": "string" }, "description": "Free-form integration key/value pairs (strings), editable via PATCH /invoices/{id}. Empty object when unset. Not carried by the invoice.created webhook." }
         }
       },
       "InvoiceLine": {
@@ -2805,6 +2922,21 @@
           "method": { "type": "string", "maxLength": 255, "description": "Payment method, verbatim label", "example": "Virement bancaire" },
           "received_date": { "type": "string", "format": "date", "nullable": true, "description": "Date the payment was received, YYYY-MM-DD. Pass null to clear.", "example": "2026-06-10" },
           "due_date": { "type": "string", "format": "date", "nullable": true, "description": "Date the payment is expected, YYYY-MM-DD. Pass null to clear.", "example": "2026-06-15" }
+        }
+      },
+      "UpdateInvoiceRequest": {
+        "type": "object",
+        "description": "The only writable part of an issued invoice. The legal invoice (amounts, lines, snapshots) is immutable; sending any field other than `metadata` returns 422.",
+        "required": ["metadata"],
+        "additionalProperties": false,
+        "properties": {
+          "metadata": {
+            "type": "object",
+            "description": "Free-form integration key/value pairs. Merged per key into the existing metadata; pass null as a value to delete that key. Up to 50 keys per invoice, key ≤ 40 chars, value ≤ 500 chars.",
+            "maxProperties": 50,
+            "additionalProperties": { "type": "string", "nullable": true, "maxLength": 500 },
+            "example": { "external_ref": "MEWS-2026-0042", "synced_at": "2026-06-18" }
+          }
         }
       }
     },
