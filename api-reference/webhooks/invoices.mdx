@@ -77,7 +77,9 @@ The `type` field identifies the document type. `type_code` carries the correspon
     "global_discount_excl_tax": 0,
     "lines": [
       {
-        "description": "Location salle plénière",
+        "name": "Location salle plénière",
+        "description": "Salle de 200 m², vidéoprojecteur et sonorisation inclus",
+        "accounting_code": "706100",
         "quantity": "1.00",
         "unit": null,
         "unit_price_excl_tax": 150000,
@@ -86,7 +88,9 @@ The `type` field identifies the document type. `type_code` carries the correspon
         "total_excl_tax": 150000
       },
       {
-        "description": "Forfait journée d'étude",
+        "name": "Forfait journée d'étude",
+        "description": null,
+        "accounting_code": "707-SEM",
         "quantity": "25.00",
         "unit": null,
         "unit_price_excl_tax": 4000,
@@ -95,7 +99,9 @@ The `type` field identifies the document type. `type_code` carries the correspon
         "total_excl_tax": 100000
       },
       {
-        "description": "Déduction acompte FAC-2026-0021 (TVA 20%)",
+        "name": "Déduction acompte FAC-2026-0021 (TVA 20%)",
+        "description": null,
+        "accounting_code": null,
         "quantity": "1.00",
         "unit": null,
         "unit_price_excl_tax": -75000,
@@ -191,7 +197,7 @@ The `type` field identifies the document type. `type_code` carries the correspon
 | `type_code` | number | UNTDID 1001 document type code (`380`, `386`, or `381`) |
 | `status` | string \| null | `ongoing`, `paid`, or `canceled` |
 | `title` | string \| null | Title of the related booking |
-| `language` | string \| null | Language the document was issued in (e.g., `fr`, `en`) |
+| `language` | string \| null | Language the document was issued in (e.g., `fr`, `en`). `null` when no language was frozen on the document; in that case line labels fall back to French |
 | `currency` | string | Always `EUR` |
 | `created_at` | number \| null | Issue timestamp, Unix milliseconds |
 | `due_date` | string \| null | Payment due date, `YYYY-MM-DD` |
@@ -227,7 +233,9 @@ Per document type:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `description` | string | Line label |
+| `name` | string \| null | Line label (EN16931 BT-153). Product title; for accommodation, the categories/occupancies label; for deposit and deduction lines, a generated label. Localized to the invoice `language` (falls back to French). `null` only if no label can be resolved |
+| `description` | string \| null | Free-text line description as entered on the product/room and printed on the PDF (EN16931 BT-154). Localized to the invoice `language` (falls back to French). `null` when the line has none, and for aggregated and deduction lines |
+| `accounting_code` | string \| null | Accounting code of the line, inherited from the product's accounting tag at generation time. `null` for aggregated and deposit-deduction lines |
 | `quantity` | string | Decimal string (e.g., `"25.00"`) |
 | `unit` | string \| null | Unit of measure, when applicable (e.g., `day` for accommodation lines) |
 | `unit_price_excl_tax` | number | Unit price excluding tax, in cents, **before discount** |

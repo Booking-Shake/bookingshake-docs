@@ -99,7 +99,9 @@ The invoice is returned wrapped in the standard `{ message, data }` envelope. Th
     "global_discount_excl_tax": 0,
     "lines": [
       {
-        "description": "Location salle plénière",
+        "name": "Location salle plénière",
+        "description": "Salle de 200 m², vidéoprojecteur et sonorisation inclus",
+        "accounting_code": "706100",
         "quantity": "1.00",
         "unit": null,
         "unit_price_excl_tax": 150000,
@@ -108,7 +110,9 @@ The invoice is returned wrapped in the standard `{ message, data }` envelope. Th
         "total_excl_tax": 150000
       },
       {
-        "description": "Forfait journée d'étude",
+        "name": "Forfait journée d'étude",
+        "description": null,
+        "accounting_code": "707-SEM",
         "quantity": "25.00",
         "unit": null,
         "unit_price_excl_tax": 4000,
@@ -117,7 +121,9 @@ The invoice is returned wrapped in the standard `{ message, data }` envelope. Th
         "total_excl_tax": 100000
       },
       {
-        "description": "Déduction acompte FAC-2026-0021 (TVA 20%)",
+        "name": "Déduction acompte FAC-2026-0021 (TVA 20%)",
+        "description": null,
+        "accounting_code": null,
         "quantity": "1.00",
         "unit": null,
         "unit_price_excl_tax": -75000,

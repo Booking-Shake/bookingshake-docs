@@ -1451,7 +1451,9 @@
                     "global_discount_excl_tax": 0,
                     "lines": [
                       {
-                        "description": "Location salle plénière",
+                        "name": "Location salle plénière",
+                        "description": "Salle de 200 m², vidéoprojecteur et sonorisation inclus",
+                        "accounting_code": "706100",
                         "quantity": "1.00",
                         "unit": null,
                         "unit_price_excl_tax": 150000,
@@ -1460,7 +1462,9 @@
                         "total_excl_tax": 150000
                       },
                       {
-                        "description": "Forfait journée d'étude",
+                        "name": "Forfait journée d'étude",
+                        "description": null,
+                        "accounting_code": "707-SEM",
                         "quantity": "25.00",
                         "unit": null,
                         "unit_price_excl_tax": 4000,
@@ -1469,7 +1473,9 @@
                         "total_excl_tax": 100000
                       },
                       {
-                        "description": "Déduction acompte FAC-2026-0021 (TVA 20%)",
+                        "name": "Déduction acompte FAC-2026-0021 (TVA 20%)",
+                        "description": null,
+                        "accounting_code": null,
                         "quantity": "1.00",
                         "unit": null,
                         "unit_price_excl_tax": -75000,
@@ -2773,7 +2779,7 @@
           "type_code": { "type": "integer", "description": "UNTDID 1001 document type code (380, 386, or 381)" },
           "status": { "type": "string", "nullable": true, "enum": ["ongoing", "paid", "canceled"] },
           "title": { "type": "string", "nullable": true, "description": "Title of the related booking" },
-          "language": { "type": "string", "nullable": true, "description": "Language the document was issued in (e.g. fr, en)" },
+          "language": { "type": "string", "nullable": true, "description": "Language the document was issued in (e.g. fr, en). null when no language was frozen on the document; in that case line labels fall back to French." },
           "currency": { "type": "string", "description": "Always EUR" },
           "created_at": { "type": "integer", "nullable": true, "description": "Issue timestamp, Unix milliseconds" },
           "due_date": { "type": "string", "nullable": true, "description": "Payment due date, YYYY-MM-DD" },
@@ -2803,7 +2809,9 @@
         "type": "object",
         "description": "Invoice line item as printed on the PDF. sum(lines[].total_excl_tax) - global_discount_excl_tax = amount_excl_tax (within rounding).",
         "properties": {
-          "description": { "type": "string", "description": "Line label" },
+          "name": { "type": "string", "nullable": true, "description": "Line label (EN16931 BT-153 item name). For products: the product title; for accommodation: the categories/occupancies label; for deposit and deduction lines: a generated label. Localized to the invoice `language` (falls back to French). null only if no label can be resolved." },
+          "description": { "type": "string", "nullable": true, "description": "Free-text line description as entered on the product/room and printed on the PDF (EN16931 BT-154 item description). Localized to the invoice `language` (falls back to French). null when the line has none, and for aggregated and deduction lines." },
+          "accounting_code": { "type": "string", "nullable": true, "description": "Accounting code of the line, inherited from the product's accounting_tag at generation time. null for aggregated and deposit-deduction lines." },
           "quantity": { "type": "string", "description": "Decimal string (e.g. \"25.00\")" },
           "unit": { "type": "string", "nullable": true, "description": "Unit of measure when applicable (e.g. day for accommodation lines)" },
           "unit_price_excl_tax": { "type": "integer", "description": "Unit price excluding tax, in cents, before discount" },
